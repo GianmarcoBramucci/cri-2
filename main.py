@@ -1,97 +1,125 @@
 """Main entry point for the CroceRossa Qdrant Cloud FastAPI application."""
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import time
 import os
+import asyncio 
+from contextlib import asynccontextmanager 
 
-from app.api.router import router
+from app.api.router import router as api_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
+from app.rag.engine import RAGEngine 
 
-# Configure logging
 configure_logging()
-logger = get_logger(__name__)
+logger = get_logger("main")
 
-# Create FastAPI app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("FastAPI application startup: Initializing RAG Engine via lifespan...")
+    engine_instance = RAGEngine() 
+    app.state.rag_engine = engine_instance 
+    try:
+        await engine_instance.ainitialize() 
+        if engine_instance._initialization_failed:
+            logger.critical("RAG Engine ainitialize() completed but reported an initialization failure during lifespan startup.")
+        else:
+            logger.info("RAG Engine instance successfully initialized via ainitialize() during lifespan startup and is ready.")
+    except Exception as e:
+        logger.critical(f"Fatal error during RAG Engine ainitialize() in lifespan startup: {e}", exc_info=True)
+        if hasattr(app.state, 'rag_engine') and app.state.rag_engine:
+             app.state.rag_engine._initialization_failed = True
+    
+    yield 
+    
+    logger.info("FastAPI application shutdown via lifespan...")
+    if hasattr(app.state, 'rag_engine') and app.state.rag_engine:
+        logger.info("Attempting to close RAG Engine resources...")
+        await app.state.rag_engine.aclose()
+    logger.info("Lifespan shutdown complete.")
+
 app = FastAPI(
     title="CroceRossa Qdrant Cloud",
-    description="Assistente virtuale conversazionale per la Croce Rossa Italiana",
-    version="1.0.0",
+    description="Assistente virtuale conversazionale per la Croce Rossa Italiana - Edizione Tiger I Universal Production Ready",
+    version="1.2.3", 
+    lifespan=lifespan 
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this to specific origins
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"], 
     allow_headers=["*"],
 )
 
-# Mount static files
-try:
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-except:
-    # Directory potrebbe non esistere ancora
-    os.makedirs("static", exist_ok=True)
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+current_script_dir = os.path.dirname(os.path.abspath(__file__))
+static_dir_path = os.path.join(current_script_dir, "static")
 
-# Add request ID middleware
+if not os.path.exists(static_dir_path): 
+    logger.info(f"Static directory '{static_dir_path}' not found. Creating it.")
+    os.makedirs(static_dir_path, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=static_dir_path), name="static")
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    """Add request ID and process time to response headers."""
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     return response
 
-# Exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler for the application."""
     logger.error(
-        "Unhandled exception",
-        error=str(exc),
-        path=request.url.path,
-        method=request.method,
+        "Unhandled exception during request processing",
+        error=str(exc), path=request.url.path, method=request.method, exc_info=True
     )
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Si è verificato un errore interno. Riprova più tardi o contatta il supporto."
-        },
-    )
+    return JSONResponse(status_code=500, content={"detail": "Si è verificato un errore interno del server."})
 
-# Include API router
-app.include_router(router, prefix="/api")
+app.include_router(api_router, prefix="/api")
 
-# Root endpoint che serve il file HTML
+html_file_path_root = os.path.join(current_script_dir, "index.html")
+
 @app.get("/")
-async def serve_html():
-    """Serve the HTML frontend."""
-    with open("index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
-    return HTMLResponse(content=html_content, media_type="text/html")
+async def serve_html_frontend():
+    if not os.path.exists(html_file_path_root):
+        logger.error(f"Frontend HTML file '{html_file_path_root}' not found at project root. Ensure it's in the same directory as main.py.")
+        return JSONResponse(status_code=404, content={"detail": "Pagina principale non trovata."})
+    with open(html_file_path_root, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read(), media_type="text/html")
 
-# Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy"}
+    engine_status_message = "RAG Engine status not determined (instance not found in app state)."
+    is_engine_healthy = False
 
+    if hasattr(app.state, 'rag_engine') and app.state.rag_engine is not None:
+        if app.state.rag_engine._initialization_failed:
+            engine_status_message = "Error: RAG Engine initialization reported failure."
+        else: 
+            engine_status_message = "OK: RAG Engine initialized and operational."
+            is_engine_healthy = True
+    else:
+        engine_status_message = "Critical Error: RAG Engine instance not created or found in application state."
+        
+    return {
+        "application_status": "healthy" if is_engine_healthy else "unhealthy",
+        "application_version": app.version, 
+        "rag_engine_detail": engine_status_message
+    }
 
 if __name__ == "__main__":
-    logger.info(
-        "Starting CroceRossa Qdrant Cloud application",
-        environment=settings.ENVIRONMENT,
+    logger.info(f"Starting {app.title} v{app.version}", environment=settings.ENVIRONMENT)
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=settings.ENVIRONMENT == "development", 
+        log_level=settings.LOG_LEVEL.lower() 
     )
-    
-    # Crea la directory static se non esiste
-    os.makedirs("static", exist_ok=True)
-    
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

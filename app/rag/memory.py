@@ -12,7 +12,7 @@ if __name__ == "__main__":
     sys.path.insert(0, PROJECT_ROOT)
     print(f"Added project root to Python path: {PROJECT_ROOT}")
 
-from app.core.config import settings
+from app.core.config import settings # settings è già istanziato in config.py
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -32,9 +32,9 @@ class ConversationMemory:
             window_size: Maximum number of exchanges to keep in memory.
                          Defaults to MEMORY_WINDOW_SIZE from settings.
         """
-        self.window_size = window_size or settings.MEMORY_WINDOW_SIZE
+        self.window_size = window_size if window_size is not None else settings.MEMORY_WINDOW_SIZE
         self.memory: deque[Tuple[str, str]] = deque(maxlen=self.window_size)
-        self.transcript: List[Dict[str, str]] = []
+        self.transcript: List[Dict[str, str]] = [] # Full transcript, not windowed
         logger.info(f"Initialized conversation memory with window size {self.window_size}")
         
     def add_exchange(self, question: str, answer: str) -> None:
@@ -44,128 +44,92 @@ class ConversationMemory:
             question: The user's question
             answer: The system's response
         """
-        if not question or not answer:
-            logger.warning("Attempted to add empty question or answer to memory")
+        if not question or not answer: # Basic validation
+            logger.warning("Attempted to add empty question or answer to memory. Skipping.")
             return
             
         self.memory.append((question, answer))
         self.transcript.append({"user": question, "assistant": answer})
-        logger.info(f"Added exchange to memory. Current memory size: {len(self.memory)}")
-        
-        # Log the current state of memory for debugging
-        memory_content = [{"question": q, "answer": a[:50] + "..." if len(a) > 50 else a} 
-                         for q, a in self.memory]
-        logger.debug(f"Current memory state: {json.dumps(memory_content)}")
+        logger.info(f"Added exchange to memory. Current memory (deque) size: {len(self.memory)}")
         
     def get_history(self) -> List[Tuple[str, str]]:
-        """Get the current conversation history.
+        """Get the current conversation history from the sliding window.
         
         Returns:
-            List of (question, answer) tuples from the conversation
+            List of (question, answer) tuples from the conversation window.
         """
         history = list(self.memory)
-        logger.debug(f"Retrieved {len(history)} exchanges from memory")
+        logger.debug(f"Retrieved {len(history)} exchanges from memory window.")
         return history
     
     def get_transcript(self) -> List[Dict[str, str]]:
-        """Get the full conversation transcript.
+        """Get the full conversation transcript (not windowed).
         
         Returns:
-            List of dictionaries with user questions and assistant answers
+            List of dictionaries with user questions and assistant answers.
         """
-        logger.debug(f"Retrieved transcript with {len(self.transcript)} exchanges")
-        return self.transcript
+        logger.debug(f"Retrieved full transcript with {len(self.transcript)} exchanges.")
+        return list(self.transcript) # Return a copy
     
     def reset(self) -> None:
         """Reset the conversation memory and transcript."""
         self.memory.clear()
-        self.transcript = []
-        logger.info("Conversation memory and transcript reset")
+        self.transcript.clear() # Clear the full transcript as well
+        logger.info("Conversation memory (window and transcript) reset.")
 
     def load_history(self, history_items: List[Dict[str, str]]) -> None:
         """Load conversation history from a list of message dictionaries.
+        This will clear existing memory and transcript before loading.
         
         Args:
-            history_items: List of dictionaries with 'type' and 'content' keys
+            history_items: List of dictionaries, each should have "type" ('user' or 'assistant')
+                           and "content" (the message text).
+                           Example: [{"type": "user", "content": "Ciao"}, {"type": "assistant", "content": "Salve!"}]
         """
         if not history_items:
-            logger.warning("Empty history items provided to load_history")
+            logger.warning("Empty history_items provided to load_history. No action taken.")
             return
             
-        logger.info(f"Loading history with {len(history_items)} items")
+        logger.info(f"Loading history with {len(history_items)} items into memory.")
         
-        # Make a debug log of the incoming history items
-        logger.debug(f"History items format: {json.dumps(history_items[:2] if len(history_items) > 2 else history_items)}")
-        
-        # Clear existing memory and transcript before loading new history
-        self.memory.clear()
-        self.transcript = []
+        self.reset() # Clear current memory and transcript first
         
         # Process history items to extract user-assistant pairs
-        i = 0
-        while i < len(history_items) - 1:  # Stop before the last item to avoid index errors
-            # Look for user-assistant pairs
-            if (history_items[i].get("type") == "user" and 
-                history_items[i+1].get("type") == "assistant"):
-                
-                user_content = history_items[i].get("content", "")
-                assistant_content = history_items[i+1].get("content", "")
-                
-                if user_content and assistant_content:
-                    self.memory.append((user_content, assistant_content))
-                    self.transcript.append({
-                        "user": user_content,
-                        "assistant": assistant_content
-                    })
-                    logger.debug(f"Added exchange pair from history: Q={user_content[:30]}..., A={assistant_content[:30]}...")
+        user_q: Optional[str] = None
+        for item in history_items:
+            msg_type = item.get("type")
+            content = item.get("content")
+
+            if not msg_type or not content:
+                logger.warning(f"Skipping history item with missing type or content: {item}")
+                continue
+
+            if msg_type == "user":
+                if user_q is not None: # Found a user message without a preceding assistant; log and overwrite
+                    logger.warning(f"Found consecutive user messages in history. Overwriting previous user query: '{user_q}'")
+                user_q = content
+            elif msg_type == "assistant":
+                if user_q is not None:
+                    self.add_exchange(user_q, content)
+                    logger.debug(f"Loaded exchange from history: User='{user_q[:30]}...', Assistant='{content[:30]}...'")
+                    user_q = None # Reset user_q after pairing
                 else:
-                    logger.warning(f"Skipped empty content in history items {i} and {i+1}")
-                
-                # Move to the next potential pair
-                i += 2
+                    # Found an assistant message without a preceding user message
+                    logger.warning(f"Found assistant message without preceding user message in history. Skipping: '{content[:50]}...'")
             else:
-                # If not a user-assistant pair, skip one item and look for the next pair
-                logger.warning(f"Unexpected message type sequence at position {i}: "
-                             f"{history_items[i].get('type')} -> {history_items[i+1].get('type')}")
-                i += 1
+                logger.warning(f"Unknown message type '{msg_type}' in history item. Skipping: {item}")
         
-        # Ensure we don't exceed the window size
-        while len(self.memory) > self.window_size:
-            self.memory.popleft()
-            
-        logger.info(f"Successfully loaded {len(self.memory)} exchanges into memory")
-        
-        # Log the current state for debugging
-        if self.memory:
-            logger.debug(f"Memory now contains {len(self.memory)} exchanges")
-            first_exchange = self.memory[0] if self.memory else None
-            last_exchange = self.memory[-1] if self.memory else None
-            
-            if first_exchange:
-                logger.debug(f"First exchange: Q={first_exchange[0][:30]}..., A={first_exchange[1][:30]}...")
-            if last_exchange:
-                logger.debug(f"Last exchange: Q={last_exchange[0][:30]}..., A={last_exchange[1][:30]}...")
+        if user_q is not None: # Unpaired user message at the end
+            logger.warning(f"Unpaired user message at the end of history load: '{user_q}'. Not added to memory exchanges.")
+
+        logger.info(f"Successfully loaded {len(self.memory)} exchanges into memory window from {len(history_items)} items.")
 
     def is_follow_up_question(self) -> bool:
-        """Check if there's any conversation history, indicating a follow-up question.
+        """Check if there's any conversation history in the window.
         
         Returns:
-            True if there is conversation history, False otherwise
+            True if there is conversation history, False otherwise.
         """
         has_history = len(self.memory) > 0
-        logger.debug(f"Checking if follow-up question: {has_history} (memory size: {len(self.memory)})")
+        logger.debug(f"Is follow-up question check: {has_history} (memory window size: {len(self.memory)})")
         return has_history
-        
-    def get_recent_history(self, max_exchanges: int = 3) -> List[Tuple[str, str]]:
-        """Get the most recent conversation exchanges, up to a specified limit.
-        
-        Args:
-            max_exchanges: Maximum number of recent exchanges to return
-            
-        Returns:
-            List of the most recent (question, answer) tuples
-        """
-        # Get the last N exchanges from memory
-        recent_history = list(self.memory)[-max_exchanges:] if self.memory else []
-        logger.debug(f"Retrieved {len(recent_history)} recent exchanges out of {len(self.memory)} total")
-        return recent_history

@@ -30,42 +30,36 @@ Sei l’assistente ufficiale della Croce Rossa Italiana (CRI).
 """
 
 # Prompt per condensare le domande di follow-up
-CONDENSE_QUESTION_PROMPT = """Riformula la domanda in italiano in una singola query autonoma, completa e semanticamente ricca.  
-• Mantieni/integra i riferimenti personali dell’utente presenti nello storico.  
-• Se non c’è storico, espandi la domanda con termini rilevanti CRI.
+CONDENSE_QUESTION_PROMPT = """Data la seguente cronologia della chat e la domanda di follow-up, riformula la domanda di follow-up per essere una domanda autonoma e completa in italiano.
+Assicurati di includere tutti i riferimenti rilevanti a persone, luoghi, entità o dettagli personali menzionati nella cronologia della chat o nella domanda di follow-up.
+La domanda riformulata deve essere chiara, concisa e mantenere il significato originale. Non aggiungere nuove informazioni che non siano derivabili dalla cronologia o dalla domanda.
 
-Storico:  
+Cronologia Chat:
 {chat_history}
 
-Domanda originale: {question}
+Domanda di Follow-up: {question}
 
-Domanda riformulata:
+Domanda Autonoma Riformulata:
 """
 
 # Prompt per la generazione della risposta con contesto RAG
-RAG_PROMPT = """
-## Contesto
-```
-Conversazione:
+RAG_PROMPT = """Sei un assistente IA per la Croce Rossa Italiana. Rispondi alla domanda dell'utente basandoti esclusivamente sul contesto fornito e sulla cronologia della conversazione.
+Segui scrupolosamente le policy e lo stile di output definiti nel tuo system prompt.
+Non inventare informazioni. Se le informazioni non sono nel contesto, dichiara di non averle.
+Non fare riferimento ai documenti come "Documento 1" o "nel contesto fornito"; integra le informazioni in modo naturale nella risposta.
+
+Cronologia Conversazione Precedente:
 {chat_history}
 
-Domanda:
-{question}
-
-Documenti CRI rilevanti:
+Contesto dai Documenti CRI:
 {context}
-```
 
-## Istruzioni
-Rispondi **solo** con informazioni tratte dai documenti sopra e dai dati personali memorizzati.  
-Non citare i numeri/codici dei documenti (es. "Documento 5"); integra i contenuti.  
-Se mancano dati, usa la risposta di default definita nel system prompt.  
-Fornisci la risposta in formato leggibile e strutturato.
+Domanda Utente: {question}
+
+Risposta Assistente:
 """
 
-# Prompt per quando non ci sono risultati rilevanti
-NO_CONTEXT_PROMPT = """
-Non ho trovato riferimenti nei documenti CRI per rispondere alla tua domanda.
-Per informazioni ufficiali consulta cri.it, il comitato CRI locale o chiama +39 06 47591.
-Se hai altre domande sulla Croce Rossa Italiana (storia, servizi, volontariato, corsi), chiedi pure.
-"""
+# Prompt per quando non ci sono risultati rilevanti (usato come risposta diretta)
+NO_CONTEXT_PROMPT = """Mi dispiace, non ho trovato informazioni specifiche nei documenti a mia disposizione per rispondere alla tua domanda. 
+Per dettagli o richieste particolari, ti consiglio di consultare il sito ufficiale cri.it, contattare il comitato della Croce Rossa Italiana più vicino a te, o chiamare il numero nazionale +39 06 47591.
+Se hai altre domande generali sulla Croce Rossa Italiana, sui suoi servizi, sul volontariato o sui corsi, sarò felice di aiutarti se le informazioni sono disponibili."""

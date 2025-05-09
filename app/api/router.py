@@ -1,186 +1,146 @@
-"""API router for the CroceRossa Qdrant Cloud application."""
+"""API router for RAG queries and other application endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, Body
-from typing import Dict, Any, Optional
+from fastapi import APIRouter, HTTPException, Depends, Request, Body
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional
 
-from app.api.models import (
-    QueryRequest,
-    QueryResponse,
-    ResetRequest,
-    ResetResponse,
-    TranscriptResponse,
-    ContactResponse,
-)
-from app.core.config import settings
-from app.core.logging import get_logger
 from app.rag.engine import RAGEngine
-from app.rag.memory import ConversationMemory
+from app.rag.memory import ConversationMemory 
+from app.core.logging import get_logger
+from app.core.config import settings as app_settings # Per accedere a settings.CRI_...
 
-logger = get_logger(__name__)
 
+logger = get_logger(__name__) # Logger specifico per il router
 router = APIRouter()
 
-# Global store for session-specific memories
-session_memories: Dict[str, ConversationMemory] = {}
+# --- Pydantic Models for API requests and responses ---
+class QueryRequest(BaseModel):
+    query: str
+    session_id: Optional[str] = None
+    # La storia della conversazione ora viene gestita dalla memoria interna dell'engine,
+    # ma il client PUO' inviare una storia per "inizializzare" o "sovrascrivere"
+    # la memoria per una data sessione (se l'engine supportasse sessioni multiple di memoria).
+    # Per ora, RAGEngine ha UNA memoria. Se il client invia la storia, la usiamo per popolare quella.
+    conversation_history: Optional[List[Dict[str, str]]] = Field(None, 
+        description='Optional: client-provided history. Format: [{"type": "user"|"assistant", "content": "..."}]. If provided, it will replace current engine memory content.')
+    include_prompt: Optional[bool] = False
 
-def get_session_memory(session_id: Optional[str] = None) -> ConversationMemory:
-    """Dependency to get or create session-specific conversation memory."""
-    if not session_id:
-        logger.warning("Request received without session_id, creating temporary memory")
-        return ConversationMemory()
+class SourceDocument(BaseModel):
+    text_preview: str
+    metadata: Dict[str, Any]
 
-    if session_id not in session_memories:
-        logger.info(f"Creating new conversation memory for session_id: {session_id}")
-        session_memories[session_id] = ConversationMemory()
-        
-    memory = session_memories[session_id]
-    logger.debug(f"Retrieved memory for session_id: {session_id} (memory ID: {id(memory)})")
-    return memory
+class QueryResponse(BaseModel):
+    answer: str
+    source_documents: List[SourceDocument]
+    condensed_question: Optional[str] = None
+    error: Optional[str] = None
+    full_prompt: Optional[str] = None # Se include_prompt è True
 
-# Dependency to get RAG engine, now aware of session-specific memory
-def get_rag_engine(session_memory: ConversationMemory = Depends(get_session_memory)) -> RAGEngine:
-    """Dependency to provide the RAG engine instance, initialized with session-specific memory."""
-    try:
-        # Pass the session-specific memory to the RAGEngine
-        engine = RAGEngine(memory=session_memory)
-        logger.debug(f"Created RAG engine with memory ID: {id(session_memory)}")
-        
-        # Check for the internal failure flag set during RAGEngine init
-        if hasattr(engine, '_initialization_failed') and engine._initialization_failed:
-            logger.error("RAGEngine initialization failed (detected in get_rag_engine via flag)")
-            # We can't raise HTTPException here directly as it's a dependency setup
-        return engine
-    except Exception as e:
-        logger.error(f"Failed to initialize RAG engine in dependency: {str(e)}", exc_info=True)
-        # Create a minimally functional engine for error reporting
-        engine = RAGEngine.__new__(RAGEngine) # Create instance without calling __init__
-        setattr(engine, '_initialization_failed', True) # Manually set failure flag
-        setattr(engine, 'memory', session_memory) # Assign the session memory
-        logger.warning("Returning a minimally functional RAGEngine due to init error.")
-        return engine
+class ResetRequest(BaseModel): # Non più usato direttamente, ma potrebbe servire per future API specifiche per sessione
+    session_id: Optional[str] = None # Opzionale, per resettare la memoria globale dell'engine se non specificato
 
+class TranscriptResponse(BaseModel):
+    transcript: List[Dict[str, str]]
+
+class ContactInfo(BaseModel):
+    email: str
+    phone: str
+    website: str
+
+
+# --- Helper function to get RAG Engine instance ---
+def get_rag_engine(request: Request) -> RAGEngine:
+    if not hasattr(request.app.state, 'rag_engine') or request.app.state.rag_engine is None:
+        logger.error("RAG Engine instance not found in application state. Startup might have failed.")
+        raise HTTPException(status_code=503, detail="Servizio RAG temporaneamente non disponibile (Engine non trovato).")
+    
+    engine: RAGEngine = request.app.state.rag_engine
+    if engine._initialization_failed: 
+        logger.error("RAG Engine initialization reported failure. Service unavailable.")
+        raise HTTPException(status_code=503, detail="Servizio RAG non disponibile: inizializzazione fallita.")
+    return engine
+
+# --- API Endpoints ---
 
 @router.post("/query", response_model=QueryResponse)
-async def query(request: QueryRequest, rag_engine: RAGEngine = Depends(get_rag_engine)):
-    """Process a user query and return a response."""
-    logger.info(f"Received query: '{request.query}', session_id: {request.session_id}")
-    
-    # Get the memory specific to this session
-    current_session_memory = get_session_memory(request.session_id)
-    
-    # Log the memory state before loading history
-    logger.info(f"Memory before loading history: {len(current_session_memory.get_history())} exchanges")
-    
-    # Load conversation history
-    if request.conversation_history:
-        logger.info(f"Loading {len(request.conversation_history)} items from client history")
-        current_session_memory.load_history(request.conversation_history)
-        logger.info(f"Memory after loading: {len(current_session_memory.get_history())} exchanges")
-    
-    # Make sure the RAG engine uses this memory
-    rag_engine.memory = current_session_memory
-    
-    # Process the query
+async def handle_query_endpoint( # Rinomina per evitare conflitto con la funzione `query` dell'engine
+    query_request: QueryRequest,
+    engine: RAGEngine = Depends(get_rag_engine)
+):
+    """
+    Process a user query using the RAG engine.
+    If `conversation_history` is provided by the client, the engine's current memory
+    will be reset and loaded with this history before processing the query.
+    """
+    session_id = query_request.session_id or "default_session" # Usa un default se non fornito
+
+    # Se il client invia una cronologia, la usiamo per popolare la memoria dell'engine per questa chiamata.
+    # L'engine attuale ha una singola istanza di memoria.
+    # Questo significa che ogni chiamata con `conversation_history` sovrascrive la memoria precedente.
+    if query_request.conversation_history is not None: # Permetti lista vuota per resettare
+        logger.info(f"Client provided conversation history for session '{session_id}'. Resetting and loading engine memory.")
+        try:
+            engine.memory.reset() # Assicurati che memory esista
+            if query_request.conversation_history: # Carica solo se non è vuota
+                 engine.memory.load_history(query_request.conversation_history)
+        except AttributeError:
+            logger.error("Engine memory object not found while trying to load history. Engine might not be fully initialized.")
+            raise HTTPException(status_code=503, detail="Errore interno: gestione memoria fallita.")
+
+
+    logger.info(f"Processing query via API: '{query_request.query}' for session_id: {session_id}")
     try:
-        result = rag_engine.query(request.query, include_prompt=request.include_prompt)
-        return QueryResponse(**result)
-    except Exception as e:
-        logger.error(f"Error processing query: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Si è verificato un errore durante l'elaborazione della richiesta: {str(e)}"
+        # Chiama il metodo asincrono aquery dell'engine
+        result_dict = await engine.aquery(
+            question=query_request.query,
+            include_prompt=query_request.include_prompt or False # Default a False se non fornito
         )
+        return QueryResponse(**result_dict) # Mappa il dizionario al modello Pydantic
+    except Exception as e:
+        logger.error(f"Error during engine.aquery for session {session_id}: {str(e)}", exc_info=True)
+        # Restituisci un errore generico al client, ma logga i dettagli
+        raise HTTPException(status_code=500, detail=f"Errore interno del server durante l'elaborazione della query.")
 
 
-@router.post("/reset", response_model=ResetResponse)
-async def reset(request: ResetRequest):
-    """Reset the conversation memory for a given session_id."""
-    logger.info(f"Received reset request for session_id: {request.session_id}")
-    
-    if not request.session_id:
-        raise HTTPException(status_code=400, detail="session_id is required for reset")
-
+@router.post("/reset", status_code=204)
+async def reset_conversation_endpoint( # Rinomina
+    engine: RAGEngine = Depends(get_rag_engine)
+    # reset_request: Optional[ResetRequest] = None, # Per futura specificità di sessione
+):
+    """
+    Resets the RAG engine's current conversation memory.
+    """
+    # session_id_to_reset = reset_request.session_id if reset_request else "global"
+    logger.info(f"API call to reset conversation memory for the RAGEngine instance.")
     try:
-        # Get the memory for this session
-        if request.session_id in session_memories:
-            # Reset the memory
-            session_memories[request.session_id].reset()
-            # Also remove from global store for a complete reset
-            del session_memories[request.session_id]
-            logger.info(f"Reset and removed memory for session_id: {request.session_id}")
-        else:
-            logger.warning(f"Reset requested for non-existent session_id: {request.session_id}")
-        
-        return ResetResponse(
-            success=True,
-            message="Conversazione resettata con successo."
-        )
-    
+        engine.reset_memory()
+        # HTTP 204 No Content non richiede un corpo di risposta
     except Exception as e:
-        logger.error(f"Error resetting conversation: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Si è verificato un errore durante il reset della conversazione: {str(e)}"
-        )
-
+        logger.error(f"Error resetting memory via API: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Errore durante il reset della memoria.")
 
 @router.get("/transcript", response_model=TranscriptResponse)
-async def transcript(session_id: Optional[str] = None):
-    """Get the conversation transcript for a given session_id."""
-    logger.info(f"Received transcript request for session_id: {session_id}")
-    
-    # Il frontend sta chiamando questo endpoint senza session_id
-    # Prova a usare i cookie o l'ultimo session_id attivo
-    if not session_id and session_memories:
-        # Usa l'ultimo session_id attivo come fallback
-        active_sessions = list(session_memories.keys())
-        if active_sessions:
-            session_id = active_sessions[-1]
-            logger.info(f"No session_id provided, using last active session: {session_id}")
-
-    if not session_id:
-        logger.warning("No session_id provided and no active sessions found")
-        return TranscriptResponse(transcript=[])
-
+async def get_conversation_transcript_endpoint( # Rinomina
+    engine: RAGEngine = Depends(get_rag_engine)
+    # session_id: Optional[str] = Query(None, description="ID della sessione per cui ottenere il transcript, se supportato.")
+):
+    """
+    Retrieves the RAG engine's current conversation transcript.
+    """
+    logger.info(f"API call to retrieve transcript for the RAGEngine instance.")
     try:
-        if session_id in session_memories:
-            transcript_data = session_memories[session_id].get_transcript()
-            logger.info(f"Returning transcript with {len(transcript_data)} exchanges for session_id: {session_id}")
-            return TranscriptResponse(transcript=transcript_data)
-        else:
-            logger.warning(f"Transcript requested for non-existent session_id: {session_id}")
-            return TranscriptResponse(transcript=[])
-    
+        transcript_data = engine.get_transcript()
+        return TranscriptResponse(transcript=transcript_data)
     except Exception as e:
-        logger.error(f"Error retrieving transcript: {str(e)}", exc_info=True)
-        return TranscriptResponse(transcript=[])
+        logger.error(f"Error retrieving transcript via API: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Errore durante il recupero del transcript.")
 
-
-@router.get("/contact", response_model=ContactResponse)
-async def contact():
-    """Get the CRI contact information."""
-    logger.info("Received contact information request")
-    
-    try:
-        return ContactResponse(
-            name="Croce Rossa Italiana",
-            website=settings.CRI_WEBSITE,
-            email=settings.CRI_CONTACT_EMAIL,
-            phone=settings.CRI_CONTACT_PHONE,
-            headquarters="Via Bernardino Ramazzini, 31, 00151 Roma RM",
-            description=(
-                "La Croce Rossa Italiana, fondata il 15 giugno 1864, è un'associazione "
-                "di soccorso volontario, parte integrante del Movimento Internazionale "
-                "della Croce Rossa e della Mezzaluna Rossa. Opera in Italia nei campi "
-                "sanitario, sociale e umanitario, secondo i sette Principi Fondamentali "
-                "del Movimento: Umanità, Imparzialità, Neutralità, Indipendenza, "
-                "Volontariato, Unità e Universalità."
-            )
-        )
-    
-    except Exception as e:
-        logger.error(f"Error retrieving contact information: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Si è verificato un errore durante il recupero delle informazioni di contatto: {str(e)}"
-        )
+@router.get("/contact", response_model=ContactInfo)
+async def get_contact_info_endpoint(): # Rinomina
+    """Get CRI contact information from application settings."""
+    logger.info("API call to retrieve CRI contact information.")
+    return ContactInfo(
+        email=app_settings.CRI_CONTACT_EMAIL,
+        phone=app_settings.CRI_CONTACT_PHONE,
+        website=app_settings.CRI_WEBSITE,
+    )

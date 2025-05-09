@@ -29,7 +29,7 @@ try:
     
     # Test a simple query
     print("\nTesting query functionality...")
-    result = rag_engine.query("Chi è la Croce Rossa?")
+    result = rag_engine.aquery("Chi è la Croce Rossa?")
     print(f"Query response: {result['answer'][:100]}...")
     
     # Print the documents that were retrieved
