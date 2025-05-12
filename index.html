@@ -9,13 +9,16 @@
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- AOS Animation Library -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
   <!-- Marked.js per il parsing del Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    // Tailwind Config from second file
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -25,1495 +28,523 @@
               red: '#e3000f',
               darkred: '#b80000',
               lightred: '#ff3b4a',
-              gray: '#f2f2f2',
-              darkgray: '#333333',
             },
           },
           fontFamily: {
-            sans: ['Rubik', 'sans-serif'],
+            sans: ['Montserrat', 'sans-serif'],
             display: ['Playfair Display', 'serif'],
           },
           animation: {
             'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'typing': 'typing 1s infinite',
-            'float': 'floating 5s ease-in-out infinite'
+            'typing': 'typing 1.5s infinite',
+            'wave': 'wave 8s linear infinite',
+            'floating': 'floating 5s ease-in-out infinite',
+            'slide-in-right': 'slideInRight 0.4s ease forwards',
+            'slide-in-left': 'slideInLeft 0.4s ease forwards',
+            'fade-in': 'fadeIn 0.4s ease forwards',
+            'scale-in': 'scaleIn 0.3s ease forwards',
+            'bounce-in': 'bounceIn 0.5s ease forwards',
           },
           keyframes: {
             typing: {
-              '0%': { transform: 'translateY(0px)' },
-              '28%': { transform: 'translateY(-5px)' },
-              '44%': { transform: 'translateY(0px)' },
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-6px)' },
+            },
+            wave: {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' },
             },
             floating: {
-              '0%': { transform: 'translateY(0px)' },
-              '50%': { transform: 'translateY(-8px)' },
-              '100%': { transform: 'translateY(0px)' },
-            }
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' },
+            },
+            slideInRight: {
+              '0%': { opacity: '0', transform: 'translateX(20px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' }
+            },
+            slideInLeft: {
+              '0%': { opacity: '0', transform: 'translateX(-20px)' },
+              '100%': { opacity: '1', transform: 'translateX(0)' }
+            },
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            scaleIn: { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+            bounceIn: { '0%': { opacity: '0', transform: 'scale(0.8)' }, '60%': { opacity: '1', transform: 'scale(1.05)' }, '80%': { transform: 'scale(0.98)' }, '100%': { transform: 'scale(1)' } },
           },
-          screens: {
-            'xs': '480px', // Extra small screen breakpoint
+           screens: { // Tailwind default breakpoints: sm: 640px, md: 768px, lg: 1024px, xl: 1280px
+            'xs': '480px', // Custom extra small
           }
         },
       },
     }
   </script>
   <style>
-    /* Personalizzazione della scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 5px;
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Montserrat', sans-serif; overflow: hidden; background-color: #f9fafb; }
+    .dark body { background-color: #111827; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(209, 213, 219, 0.5); border-radius: 10px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(75, 85, 99, 0.6); }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(156, 163, 175, 0.7); }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.8); }
+    .parallax-header { background: linear-gradient(135deg, #e3000f 0%, #b80000 100%); position: relative; }
+    .parallax-header::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E"); opacity: 0.5; z-index: 0; }
+    .cross-pattern-bg { background-color: #f9fafb; background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e3000f' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+    .dark .cross-pattern-bg { background-color: #111827; background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e3000f' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+    .card-styled { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-styled:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07); }
+    .dark .card-styled:hover { box-shadow: 0 8px 25px rgba(227, 0, 15, 0.1); }
+    .typing-dot { animation: typing 1.5s infinite ease-in-out; }
+    .typing-dot:nth-child(1) { animation-delay: 0s; } .typing-dot:nth-child(2) { animation-delay: 0.2s; } .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    .modal-container { display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background-color: rgba(17, 24, 39, 0.6); z-index: 100; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-container.active { opacity: 1; pointer-events: auto; }
+    .modal-content { transform: scale(0.95) translateY(10px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; max-height: 90vh; width: 90%; }
+    .modal-container.active .modal-content { transform: scale(1) translateY(0); opacity: 1; }
+    .spinner { width: 24px; height: 24px; border-radius: 50%; border: 3px solid rgba(227, 0, 15, 0.1); border-top-color: #e3000f; animation: spin 1s infinite linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .widget-container { position: relative; min-height: 350px; display: flex; align-items: center; justify-content: center; width: 100%; background-color: rgba(0,0,0,0.02); border-radius: 0.5rem; }
+    .dark .widget-container { background-color: rgba(255,255,255,0.03); }
+    elevenlabs-convai { position: static !important; top: auto !important; left: auto !important; transform: none !important; margin: 0 auto !important; width: 100%; max-width: 400px; height: auto; min-height: 350px; }
+    @supports(padding: max(0px)) { .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); } .safe-left { padding-left: max(1rem, env(safe-area-inset-left)); } .safe-right { padding-right: max(1rem, env(safe-area-inset-right)); } }
+    @supports (padding-top: constant(safe-area-inset-top)) { .safe-top { padding-top: constant(safe-area-inset-top); } }
+    @supports (padding-top: env(safe-area-inset-top)) { .safe-top { padding-top: env(safe-area-inset-top); } }
+    html, body { overscroll-behavior-y: contain; height: 100%; width: 100%; }
+    *:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+    *:focus-visible { outline: 2px solid #ff3b4a; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(227, 0, 15, 0.2); border-radius: 2px; }
+    textarea:focus-visible { outline-color: #e3000f; box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.15); border-radius: 0.75rem; }
+    .message-bubble { clear: both; }
+    .prose-chat p { margin-top: 0.5em; margin-bottom: 0.5em; } .prose-chat ul, .prose-chat ol { margin-top: 0.5em; margin-bottom: 0.5em; padding-left: 1.2em; } .prose-chat li { margin-top: 0.2em; margin-bottom: 0.2em; } .prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 { margin-bottom: 0.5em; margin-top: 1em; }
+
+    /* Responsive Fix: Ensure mobile menu button is always available when sidebar is hidden */
+    #mobile-menu-btn { display: none; } /* Hide by default */
+    @media (max-width: 767.98px) { /* Below md breakpoint */
+        #mobile-menu-btn { display: flex; } /* Show mobile menu button */
+        #sidebar { display: none; } /* Ensure sidebar is hidden */
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
+    @media (min-width: 768px) { /* md breakpoint and above */
+        #mobile-menu-btn { display: none; } /* Hide mobile menu button */
+        #sidebar { display: flex; } /* Show desktop sidebar */
     }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: rgba(227, 0, 15, 0.2);
-      border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(227, 0, 15, 0.4);
-    }
-    
-    /* Animazione per il loader di typing */
-    .typing-dot:nth-child(1) {
-      animation-delay: 0.2s;
-    }
-    .typing-dot:nth-child(2) {
-      animation-delay: 0.3s;
-    }
-    .typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-    
-    /* Pattern di background con croce stilizzata */
-    .cross-pattern {
-      background-color: rgba(227, 0, 15, 0.03);
-      background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e3000f' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-    
-    .dark .cross-pattern {
-      background-color: rgba(0, 0, 0, 0.9);
-      background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e3000f' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-    
-    /* Effetto background 3D con gradiente */
-    .bg-gradient-3d {
-      position: relative;
-      overflow: hidden;
-      z-index: 0;
-    }
-    
-    .bg-gradient-3d::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 60%);
-      transform: rotate(30deg);
-      z-index: -1;
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    
-    .dark .bg-gradient-3d::before {
-      background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 60%);
-      opacity: 0.3;
-    }
-    
-    /* Animazioni per comparsa messaggi */
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    .slide-in-right {
-      animation: slideInRight 0.3s ease forwards;
-    }
-    
-    .slide-in-left {
-      animation: slideInLeft 0.3s ease forwards;
-    }
-    
-    /* Evita bordi rosa e altri colori indesiderati a certi breakpoint */
-    @media (max-width: 668px) and (min-width: 658px) {
-      .no-pink-border {
-        border-color: transparent !important;
-      }
-      
-      .alt-bg {
-        background-color: #f8f8f8 !important;
-      }
-      
-      .dark .alt-bg {
-        background-color: #1e1e1e !important;
-      }
-    }
-    
-    /* Fix per lo scrolling dei suggerimenti in mobile */
-    .suggestion-scroll {
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none; /* Firefox */
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-    }
-    
-    .suggestion-scroll::-webkit-scrollbar {
-      display: none; /* Chrome e Safari */
-    }
-    
-    .suggestion-item {
-      scroll-snap-align: start;
-    }
-    
-    /* Safe area insets for modern devices */
-    @supports(padding: max(0px)) {
-      .safe-bottom {
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
-      }
-      .safe-left {
-        padding-left: max(1rem, env(safe-area-inset-left));
-      }
-      .safe-right {
-        padding-right: max(1rem, env(safe-area-inset-right));
-      }
-    }
-    
-    /* Fix per dispositivi Apple con il notch e Dynamic Island */
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      .safe-top {
-        padding-top: constant(safe-area-inset-top);
-      }
-    }
-    @supports (padding-top: env(safe-area-inset-top)) {
-      .safe-top {
-        padding-top: env(safe-area-inset-top);
-      }
-    }
-    
-    /* Ottimizzazioni touch per dispositivi mobile */
-    @media (pointer: coarse) {
-      .touch-target {
-        min-height: 44px;
-        min-width: 44px;
-      }
-    }
-    
-    /* Disable pull-to-refresh on mobile */
-    html, body {
-      overscroll-behavior-y: contain;
-      height: 100%;
-      width: 100%;
-      position: fixed;
-      overflow: hidden;
-    }
-    
-    /* Fix per telefoni pieghevoli e tablet con differenti orientamenti */
-    @media screen and (max-width: 320px) {
-      .xxs-text-xs {
-        font-size: 0.75rem;
-        line-height: 1rem;
-      }
-      
-      .xxs-p-1 {
-        padding: 0.25rem;
-      }
-    }
-    
-    /* Nascondere l'outline del focus solo se non si usa la tastiera */
-    .no-focus-outline:focus:not(:focus-visible) {
-      outline: none;
-    }
-    
-    /* Enhance focus for keyboard users */
-    :focus-visible {
-      outline: 2px solid #e3000f;
-      outline-offset: 2px;
-    }
-    
-    /* Fix per schermi ultra-wide */
-    @media screen and (min-width: 2000px) {
-      .ultra-wide-container {
-        max-width: 1400px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-    }
-    
-    /* Stili per dispositivi con dark mode preferito dal sistema */
-    @media (prefers-color-scheme: dark) {
-      .auto-dark {
-        background-color: #1a1a1a;
-        color: #f0f0f0;
-      }
-    }
+
+
   </style>
 </head>
-<body class="bg-gray-50 cross-pattern h-screen w-screen overflow-hidden font-sans dark:text-gray-200">
-  <!-- Overlay per effetto glass quando si apre il menu mobile -->
-  <div id="mobileMenuOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm hidden md:hidden"></div>
-  
-  <div class="flex h-screen w-screen">
-    <!-- Sidebar (desktop) -->
-    <aside class="hidden md:flex w-64 lg:w-72 bg-white dark:bg-gray-900 shadow-lg z-10 flex-col border-r border-gray-100 dark:border-gray-800 transition-all duration-300">
-      <div class="p-4 flex items-center border-b border-gray-100 dark:border-gray-800">
-        <div class="w-9 h-9 flex items-center justify-center bg-cri-red rounded-xl mr-3 shadow-md">
-          <i class="fas fa-plus text-white text-sm"></i>
-        </div>
-        <div>
-          <span class="font-bold text-gray-800 dark:text-white block text-sm">CRI Assistente</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">Croce Rossa Italiana</span>
-        </div>
-      </div>
-      
-      <div class="flex-grow flex flex-col overflow-hidden">
-        <div class="px-4 py-4 flex items-center justify-between">
-          <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Le tue conversazioni</div>
-          <button id="newChatBtn" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors touch-target">
-            <i class="fas fa-plus"></i>
-          </button>
-        </div>
-        
-        <!-- Lista di chat -->
-        <div id="chatsList" class="flex-grow overflow-y-auto px-2 custom-scrollbar">
-          <!-- Le chat verranno aggiunte qui dinamicamente -->
-        </div>
-        
-        <div class="border-t border-gray-100 dark:border-gray-800 my-2"></div>
-        
-        <div class="px-4 py-2">
-          <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Aiuto</div>
-          
-          <div class="space-y-1">
-            <div id="guidaBtn" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
-              <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
-                <i class="fas fa-question-circle text-gray-500 dark:text-gray-400"></i>
-              </div>
-              <span>Guida</span>
-            </div>
-            
-            <a href="https://cri.it/" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
-              <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
-                <i class="fas fa-external-link-alt text-gray-500 dark:text-gray-400"></i>
-              </div>
-              <span>Sito CRI</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </aside>
-    
-    <!-- Mobile menu button (visible only on mobile) -->
-    <button id="mobileMenuButton" aria-label="Menu" class="md:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 w-10 h-10 rounded-xl shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 touch-target">
-      <i class="fas fa-bars"></i>
-    </button>
-    
-    <!-- Mobile sidebar (hidden by default) -->
-    <aside id="mobileSidebar" class="fixed inset-y-0 left-0 w-[85%] max-w-xs bg-white dark:bg-gray-900 shadow-lg z-50 transform -translate-x-full transition-transform duration-300 md:hidden safe-left">
-      <!-- Mobile sidebar content: same as desktop sidebar -->
-      <div class="p-4 flex items-center border-b border-gray-100 dark:border-gray-800">
-        <div class="w-9 h-9 flex items-center justify-center bg-cri-red rounded-xl mr-3 shadow-md">
-          <i class="fas fa-plus text-white text-sm"></i>
-        </div>
-        <div>
-          <span class="font-bold text-gray-800 dark:text-white block text-sm">CRI Assistente</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">Croce Rossa Italiana</span>
-        </div>
-        <button id="closeMobileMenu" aria-label="Chiudi menu" class="ml-auto text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 touch-target">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <div class="flex-grow flex flex-col overflow-hidden h-[calc(100%-4rem)]">
-        <div class="px-4 py-4 flex items-center justify-between">
-          <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Le tue conversazioni</div>
-          <button id="newChatBtnMobile" aria-label="Nuova chat" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors touch-target">
-            <i class="fas fa-plus"></i>
-          </button>
-        </div>
-        
-        <!-- Lista di chat mobile -->
-        <div id="chatsListMobile" class="flex-grow overflow-y-auto px-2 custom-scrollbar">
-          <!-- Le chat verranno aggiunte qui dinamicamente -->
-        </div>
-        
-        <div class="border-t border-gray-100 dark:border-gray-800 my-2"></div>
-        
-        <div class="px-4 py-2 pb-8 safe-bottom">
-          <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Aiuto</div>
-          
-          <div class="space-y-1">
-            <div id="guidaBtnMobile" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
-              <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
-                <i class="fas fa-question-circle text-gray-500 dark:text-gray-400"></i>
-              </div>
-              <span>Guida</span>
-            </div>
-            
-            <a href="https://cri.it/" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
-              <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
-                <i class="fas fa-external-link-alt text-gray-500 dark:text-gray-400"></i>
-              </div>
-              <span>Sito CRI</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </aside>
-    
-    <!-- Main content area -->
-    <main class="flex-grow flex flex-col relative w-full">
-      <!-- Header con background 3D -->
-      <div class="bg-gradient-to-r from-cri-red to-cri-darkred relative h-32 sm:h-28 flex items-center justify-center bg-gradient-3d safe-top">
-        <!-- Pattern background -->
-        <div class="absolute inset-0 bg-black bg-opacity-5 dark:bg-opacity-20"></div>
-        
-        <!-- Header content -->
-        <div class="relative z-10 px-4 sm:px-6 md:px-12 w-full">
-          <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between">
-            <h1 class="text-white text-xl xs:text-2xl md:text-3xl font-bold font-display tracking-wide mt-6 sm:mt-0">
-              <span class="inline-block transform hover:scale-105 transition-transform cursor-default">
-                Assistente Croce Rossa
-              </span>
-              <i class="fas fa-plus ml-2 text-white text-lg xs:text-xl bg-white bg-opacity-20 p-1.5 rounded-full"></i>
-            </h1>
-            
-            <!-- Theme switcher -->
-            <div class="mt-2 sm:mt-0 flex bg-white bg-opacity-20 rounded-full p-1">
-              <button id="lightModeBtn" aria-label="Tema chiaro" class="text-white text-xs font-medium px-3 py-1 rounded-full bg-white bg-opacity-30 touch-target">Chiaro</button>
-              <button id="darkModeBtn" aria-label="Tema scuro" class="text-white text-xs font-medium px-3 py-1 rounded-full touch-target">Scuro</button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Wave at bottom -->
-        <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-6 md:h-8 text-gray-50 dark:text-gray-900 fill-current">
-            <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"></path>
-          </svg>
-        </div>
-      </div>
-      
-      <!-- Suggerimenti rapidi - FIXATI PER MOBILE -->
-      <div class="px-2 sm:px-4 py-3 bg-gray-50 dark:bg-gray-900">
-        <div class="max-w-4xl mx-auto">
-          <div class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Domande frequenti:</div>
-          <!-- Contenitore migliorato per lo scrolling mobile -->
-          <div class="suggestion-scroll flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar no-pink-border alt-bg">
-            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
-              Come diventare volontario?
-            </button>
-            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
-              Corsi di primo soccorso
-            </button>
-            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
-              Donare sangue
-            </button>
-            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
-              Emergenze attive
-            </button>
-            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
-              Come donare
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Chat area -->
-      <div class="relative flex-grow overflow-hidden">
-        <div id="chatContainer" class="absolute inset-0 overflow-y-auto p-2 xs:p-4 md:p-6 custom-scrollbar">
-          <div class="max-w-4xl mx-auto space-y-4 xs:space-y-6 pb-20 ultra-wide-container">
-            <!-- Messaggio di benvenuto dell'assistente con illustrazione -->
-            <div class="flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border">
-              <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
-                <i class="fas fa-robot text-cri-red text-3xl"></i>
-              </div>
-              <div class="flex-grow text-center sm:text-left">
-                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
-              </div>
-            </div>
-            
-            <!-- I messaggi chat saranno inseriti qui dinamicamente -->
-          </div>
-        </div>
-      </div>
-      
-      <!-- Input area con effetto floating -->
-      <div class="relative z-10 no-pink-border">
-        <div class="absolute -top-5 sm:-top-7 left-0 right-0 overflow-hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-5 sm:h-7 text-white dark:text-gray-800 fill-current">
-            <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" class="shape-fill"></path>
-          </svg>
-        </div>
-        
-        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 xs:p-4 md:p-6 safe-bottom no-pink-border">
-          <div class="max-w-4xl mx-auto ultra-wide-container">
-            <!-- Contenitore per pulsanti di azione e input -->
-            <form id="queryForm" class="relative">
-              <div class="relative flex-grow">
-                <div class="relative flex items-end">
-                  <div class="relative flex-grow border-2 border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-700 shadow-sm transition-all focus-within:border-cri-red focus-within:shadow-lg no-pink-border">
-                    <textarea 
-                      id="queryInput" 
-                      class="w-full bg-transparent border-none rounded-2xl py-3 px-4 pr-12 resize-none focus:ring-0 focus:outline-none custom-scrollbar max-h-32 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-                      placeholder="Scrivi qui la tua domanda..."
-                      rows="1"
-                      aria-label="Domanda"
-                    ></textarea>
-                    <button 
-                      type="button" 
-                      id="sendBtn" 
-                      aria-label="Invia messaggio"
-                      class="absolute right-2 bottom-2 text-cri-red disabled:text-gray-300 dark:disabled:text-gray-600 rounded-full p-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:hover:bg-transparent touch-target"
-                      disabled
-                    >
-                      <i class="fas fa-paper-plane"></i>
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="flex flex-wrap justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1 gap-y-1">
-                  <div class="xxs-text-xs flex flex-wrap gap-x-2 items-center">
-                    <span class="inline-flex items-center gap-1">
-                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Enter</span> 
-                      <span>per inviare</span>
-                    </span>
-                    <span class="mx-2 hidden xs:inline">·</span>
-                    <span class="inline-flex items-center gap-1">
-                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Shift</span>+<span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Enter</span> 
-                      <span>per andare a capo</span>
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-400 dark:text-gray-500 hidden md:block">
-                    Powered by <span class="font-medium">CRI</span>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-  
-  <!-- Modal per confermare l'eliminazione della chat -->
-  <div id="deleteChatModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="deleteChatModalContent">
-      <div class="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-between items-center no-pink-border">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
-          <i class="fas fa-trash-alt mr-2 text-cri-red"></i>
-          Elimina chat
-        </h3>
-        <button id="closeDeleteChatBtn" aria-label="Chiudi" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 touch-target">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="px-4 sm:px-6 py-6">
-        <p class="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare questa chat? Questa azione non può essere annullata.</p>
-      </div>
-      <div class="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-end items-center space-x-3 no-pink-border">
-        <button id="cancelDeleteChatBtn" class="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors touch-target no-pink-border">
-          Annulla
-        </button>
-        <button id="confirmDeleteChatBtn" class="px-3 sm:px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors touch-target">
-          Elimina
-        </button>
-      </div>
+<body class="cross-pattern-bg h-dvh flex flex-col dark:bg-gray-900 dark:text-gray-100 font-sans">
+  <!-- Fixed top notification banner -->
+  <div id="notification-banner" class="fixed top-0 left-0 right-0 bg-cri-red text-white py-2 px-4 z-[110] shadow-lg transform -translate-y-full transition-transform duration-300 ease-in-out safe-top">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2"><i class="fas fa-bell text-sm"></i><span id="notification-text" class="text-sm font-medium">Notifica!</span></div>
+      <button id="close-notification" aria-label="Chiudi notifica" class="text-white opacity-70 hover:opacity-100 transition-opacity"><i class="fas fa-times"></i></button>
     </div>
   </div>
-  
-  <!-- Modal per la guida -->
-  <div id="guidaModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="guidaModalContent">
-      <div class="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-between items-center no-pink-border">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
-          <i class="fas fa-question-circle mr-2 text-cri-red"></i>
-          Guida all'utilizzo
-        </h3>
-        <button id="closeGuidaBtn" aria-label="Chiudi" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 touch-target">
-          <i class="fas fa-times"></i>
-        </button>
+
+  <!-- App container -->
+  <div class="flex flex-col h-full overflow-hidden">
+    <!-- HEADER -->
+    <header class="parallax-header z-30 relative safe-top flex-shrink-0">
+      <div class="flex justify-between items-center px-4 md:px-6 py-3 relative z-10">
+        <div class="flex items-center gap-2 md:gap-3">
+          <div class="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-white flex items-center justify-center shadow-md animate-pulse-slow"><svg class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="16" fill="white"/><rect x="43" y="20" width="14" height="60" fill="#E3000F"/><rect x="20" y="43" width="60" height="14" fill="#E3000F"/></svg></div>
+          <div><h1 class="text-base sm:text-lg md:text-xl font-semibold text-white tracking-tight font-display">Assistente CRI</h1><p class="text-xs text-white text-opacity-70 hidden sm:block">Croce Rossa Italiana</p></div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <!-- Desktop Tab selector: REMOVED Analysis Tab -->
+          <div class="hidden sm:flex bg-white bg-opacity-10 rounded-full p-1 shadow-inner">
+            <button id="tab-chat-btn" aria-label="Vai alla chat" class="tab-switcher px-3 py-1 text-xs font-medium text-white rounded-full transition-all hover:bg-white/20"><i class="fas fa-comments mr-1 opacity-80"></i> Chat</button>
+            <button id="tab-voice-btn" aria-label="Vai all'assistente vocale" class="tab-switcher px-3 py-1 text-xs font-medium text-white rounded-full transition-all hover:bg-white/20"><i class="fas fa-microphone mr-1 opacity-80"></i> Vocale</button>
+          </div>
+          <button id="theme-toggle" aria-label="Cambia tema" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-white hover:bg-white/20 transition-all"><i class="fas fa-moon text-lg"></i></button>
+          <!-- Mobile menu button: ID and visibility controlled by CSS based on breakpoints -->
+          <button id="mobile-menu-btn" aria-label="Apri menu" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-white hover:bg-white/20 transition-all">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
+        </div>
       </div>
-      <div class="px-4 sm:px-6 py-6 overflow-y-auto max-h-[50vh] sm:max-h-[70vh] custom-scrollbar">
-        <div class="space-y-6">
-          <div>
-            <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2 font-display">Benvenuto all'Assistente Virtuale CRI</h4>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Questo assistente è progettato per fornirti informazioni accurate e utili sulla Croce Rossa Italiana. Ecco come utilizzarlo al meglio:</p>
+    </header>
+
+    <!-- Main content wrapper -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Desktop Sidebar: ID "sidebar" -->
+      <aside id="sidebar" class="flex-col w-64 lg:w-72 bg-white dark:bg-gray-800/50 dark:border-gray-700 shadow-sm z-20 border-r border-gray-100 transition-all duration-300 flex-shrink-0">
+        <div class="p-3 border-b border-gray-100 dark:border-gray-700"><div class="flex items-center justify-between"><h2 class="font-semibold text-sm text-gray-600 dark:text-gray-300">Conversazioni</h2><button id="new-chat-btn" aria-label="Nuova conversazione" title="Nuova conversazione" class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-cri-red hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors focus-visible:ring-2 focus-visible:ring-cri-red focus-visible:ring-offset-1"><i class="fas fa-plus"></i></button></div></div>
+        <div id="chats-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"><!-- Chat items --></div>
+        <div class="p-3 border-t border-gray-100 dark:border-gray-700"><div class="space-y-1"><button id="guide-btn" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-question-circle w-4 text-center mr-2 text-cri-red/80"></i>Guida</button><a href="https://cri.it" target="_blank" rel="noopener noreferrer" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-external-link-alt w-4 text-center mr-2 text-cri-red/80"></i>Sito CRI</a><button id="privacy-btn" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-shield-alt w-4 text-center mr-2 text-cri-red/80"></i>Privacy</button></div><div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50 text-xs text-center text-gray-400 dark:text-gray-500">Versione 2.1</div></div> <!-- Updated version -->
+      </aside>
+
+      <!-- Mobile Sidebar (Off-canvas) -->
+      <div id="mobile-sidebar" class="fixed inset-0 z-[60] hidden"> <!-- Keep md:hidden from original for JS toggle -->
+        <div id="mobile-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300 ease-in-out"></div>
+        <div class="mobile-sidebar-content absolute top-0 left-0 bottom-0 w-[85%] max-w-xs bg-white dark:bg-gray-800 shadow-xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col safe-left">
+          <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-lg bg-cri-red flex items-center justify-center shadow-md"><i class="fas fa-bars text-white text-sm"></i></div><h2 class="font-semibold text-gray-700 dark:text-gray-200">Menu</h2></div><button id="close-mobile-menu" aria-label="Chiudi menu" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fas fa-times text-xl"></i></button></div>
+          <!-- Mobile Tabs: REMOVED Analysis Tab -->
+          <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
+            <div class="grid grid-cols-2 gap-2"> <!-- Changed to grid-cols-2 -->
+              <button data-tab="chat" class="mobile-tab-btn flex flex-col items-center py-2 rounded-lg text-sm font-medium transition-colors"><i class="fas fa-comments mb-1 text-lg"></i><span class="text-xs">Chat</span></button>
+              <button data-tab="voice" class="mobile-tab-btn flex flex-col items-center py-2 rounded-lg text-sm font-medium transition-colors"><i class="fas fa-microphone mb-1 text-lg"></i><span class="text-xs">Vocale</span></button>
+            </div>
           </div>
-          
-          <div>
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1 flex items-center">
-              <i class="fas fa-comments text-cri-red mr-2"></i>
-              Come fare domande
-            </h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Scrivi la tua domanda nella casella di testo in basso e premi Enter o clicca l'icona di invio. Puoi chiedere informazioni su servizi, attività, eventi, come diventare volontario e molto altro.</p>
-          </div>
-          
-          <div>
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1 flex items-center">
-              <i class="fas fa-plus-circle text-cri-red mr-2"></i>
-              Gestione delle conversazioni
-            </h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Puoi avere più conversazioni attive contemporaneamente. Usa il pulsante "+" nella sidebar per creare una nuova chat. Puoi passare da una chat all'altra cliccando su di esse nella sidebar.</p>
-          </div>
-          
-          <div>
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1 flex items-center">
-              <i class="fas fa-trash-alt text-cri-red mr-2"></i>
-              Eliminare una chat
-            </h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Se desideri eliminare una conversazione, clicca sull'icona del cestino accanto alla chat nella sidebar. Ti verrà chiesta conferma prima di procedere con l'eliminazione.</p>
-          </div>
-          
-          <div>
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1 flex items-center">
-              <i class="fas fa-moon text-cri-red mr-2"></i>
-              Modalità chiaro/scuro
-            </h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Puoi passare dalla modalità chiara a quella scura usando i pulsanti nell'angolo in alto a destra dell'applicazione.</p>
-          </div>
-          
-          <div>
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1 flex items-center">
-              <i class="fas fa-info-circle text-cri-red mr-2"></i>
-              Suggerimenti rapidi
-            </h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Per aiutarti a iniziare, abbiamo creato alcuni suggerimenti rapidi che puoi trovare nella parte superiore dell'applicazione. Clicca su uno di essi per fare una domanda predefinita.</p>
-          </div>
-          
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 no-pink-border">
-            <h5 class="font-medium text-gray-800 dark:text-white mb-1">Informazioni sull'assistente</h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Questo assistente virtuale è progettato per fornire informazioni sulla Croce Rossa Italiana. Le risposte sono basate su documenti ufficiali della CRI. Per maggiori informazioni, visita il <a href="https://cri.it" target="_blank" rel="noopener noreferrer" class="text-cri-red hover:underline">sito ufficiale della Croce Rossa Italiana</a>.</p>
+          <div id="mobile-chats-list" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"><!-- Chat items with delete buttons --></div>
+          <div class="p-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 safe-bottom">
+            <div class="space-y-1 mb-3"><button id="mobile-guide-btn" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-question-circle w-4 text-center mr-2 text-cri-red/80"></i>Guida</button><a href="https://cri.it" target="_blank" rel="noopener noreferrer" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-external-link-alt w-4 text-center mr-2 text-cri-red/80"></i>Sito CRI</a><button id="mobile-privacy-btn" class="w-full flex items-center px-3 py-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors text-sm"><i class="fas fa-shield-alt w-4 text-center mr-2 text-cri-red/80"></i>Privacy</button></div>
+            <button id="mobile-new-chat-btn" aria-label="Nuova conversazione" class="w-full flex items-center justify-center px-3 py-2.5 rounded-lg bg-cri-red text-white hover:bg-cri-darkred transition-colors text-sm font-medium shadow-sm"><i class="fas fa-plus mr-2"></i>Nuova chat</button>
           </div>
         </div>
       </div>
-      <div class="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-end items-center no-pink-border">
-        <button id="closeGuidaBtn2" class="px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors touch-target">
-          Ho capito
-        </button>
-      </div>
+
+      <!-- Main content area -->
+      <main class="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900/80">
+        <div id="tab-container" class="flex-1 flex flex-col overflow-hidden">
+          <!-- === CHAT TAB === -->
+          <div id="tab-chat" class="flex-1 flex flex-col overflow-hidden">
+            <div class="px-3 sm:px-4 py-2 border-b border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/60 shadow-sm z-10 flex-shrink-0"><div class="overflow-x-auto custom-scrollbar pb-1 -mx-1 px-1"><div class="flex gap-2 whitespace-nowrap"><button class="suggestion-chip px-3 py-1 bg-red-50 dark:bg-red-900/30 text-cri-red text-xs sm:text-sm rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Come diventare volontario?</button><button class="suggestion-chip px-3 py-1 bg-red-50 dark:bg-red-900/30 text-cri-red text-xs sm:text-sm rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Corsi primo soccorso</button><button class="suggestion-chip px-3 py-1 bg-red-50 dark:bg-red-900/30 text-cri-red text-xs sm:text-sm rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Donare sangue</button><button class="suggestion-chip px-3 py-1 bg-red-50 dark:bg-red-900/30 text-cri-red text-xs sm:text-sm rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Emergenze attive</button><button class="suggestion-chip px-3 py-1 bg-red-50 dark:bg-red-900/30 text-cri-red text-xs sm:text-sm rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">Come donare</button></div></div></div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">
+              <!-- Welcome message is added dynamically by loadChatMessages if chat is empty -->
+            </div>
+            <div class="relative z-10 flex-shrink-0"><div class="bg-white dark:bg-gray-800/80 dark:border-gray-700 p-3 sm:p-4 border-t border-gray-100 shadow-inner safe-bottom backdrop-blur-sm"><div class="max-w-4xl mx-auto"><form id="chat-form" class="flex items-end gap-2"><div class="relative flex-grow"><textarea id="message-input" rows="1" placeholder="Scrivi un messaggio..." aria-label="Messaggio da inviare" class="w-full rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-2.5 pr-10 text-sm sm:text-base text-gray-800 dark:text-gray-100 focus:border-cri-red focus:ring-1 focus:ring-cri-red focus:outline-none transition-all resize-none custom-scrollbar" style="max-height: 120px;"></textarea><button type="submit" id="send-message-btn" aria-label="Invia messaggio" disabled class="absolute right-2 bottom-2 text-cri-red p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><i class="fas fa-paper-plane text-lg"></i></button></div></form><div class="mt-1.5 flex justify-between items-center text-xs text-gray-400 dark:text-gray-500 px-1"><div class="hidden sm:flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-[10px]">Enter</kbd><span class="text-[10px]">per inviare</span> <span class="mx-1 text-[10px]">•</span> <kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-[10px]">Shift</span>+<kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-[10px]">Enter</kbd><span class="text-[10px]">per a capo</span></div><div class="text-xs text-gray-400 dark:text-gray-500">Powered by <span class="font-medium text-gray-500 dark:text-gray-400">CRI</span></div></div></div></div></div>
+          </div>
+          <!-- === VOICE ASSISTANT TAB === -->
+          <div id="tab-voice" class="hidden flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+            <div class="max-w-3xl mx-auto w-full flex-1 flex flex-col gap-6">
+              <div class="card-styled bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 animate-fade-in"><div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700/50"><h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white flex items-center gap-2 font-display"><i class="fas fa-microphone text-cri-red"></i>Assistente Vocale</h2><span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 text-xs rounded-full font-medium">Beta</span></div><div class="widget-container flex items-center justify-center bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4 sm:p-6"><elevenlabs-convai agent-id="j9lr1Zv4W5s6khw0lxK5"></elevenlabs-convai><div id="widget-placeholder" class="text-center text-gray-500 dark:text-gray-400 italic hidden p-6">Caricamento assistente vocale...</div></div></div>
+              <div class="card-styled bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6 animate-fade-in" style="animation-delay: 0.1s"><h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2"><i class="fas fa-info-circle text-cri-red"></i>Come utilizzarlo</h3><div class="space-y-3"><div class="flex gap-3 items-center"><div class="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0"><i class="fas fa-microphone text-cri-red"></i></div><div><p class="text-gray-600 dark:text-gray-300 text-sm">Premi il microfono e poni le tue domande.</p></div></div><div class="flex gap-3 items-center"><div class="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0"><i class="fas fa-volume-up text-cri-red"></i></div><div><p class="text-gray-600 dark:text-gray-300 text-sm">L'assistente risponderà a voce.</p></div></div><div class="flex gap-3 items-center"><div class="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0"><i class="fas fa-cog text-cri-red"></i></div><div><p class="text-gray-600 dark:text-gray-300 text-sm">Usa le impostazioni del widget per personalizzare.</p></div></div></div></div>
+            </div>
+          </div>
+          <!-- TAB ANALYSIS REMOVED -->
+        </div>
+      </main>
     </div>
   </div>
-  
+
+  <button id="scroll-bottom-btn" aria-label="Vai in fondo alla chat" class="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 bg-cri-red text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg opacity-0 pointer-events-none z-40 transition-opacity duration-300 hover:bg-cri-darkred focus-visible:opacity-100 focus-visible:pointer-events-auto"><i class="fas fa-chevron-down"></i></button>
+
+  <!-- MODALS -->
+  <div id="guide-modal" class="modal-container"><div class="modal-content bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-2xl"><div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between"><h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fas fa-question-circle text-cri-red"></i>Guida</h3><button aria-label="Chiudi modale" class="close-modal-btn w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"><i class="fas fa-times"></i></button></div><div class="p-4 sm:p-6 max-h-[70vh] overflow-y-auto custom-scrollbar"><div class="space-y-4"><div><h4 class="text-base font-medium text-gray-900 dark:text-white mb-2 font-display">Benvenuto!</h4><p class="text-gray-600 dark:text-gray-300 text-sm">Questo assistente ti aiuta a trovare informazioni sulla Croce Rossa Italiana.</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-100 dark:border-gray-700/50"><h5 class="font-medium text-gray-800 dark:text-white text-sm mb-1 flex items-center gap-1.5"><i class="fas fa-comments text-cri-red/80"></i>Fare domande</h5><p class="text-gray-600 dark:text-gray-300 text-xs">Scrivi nella casella in basso e premi Invio.</p></div><div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-100 dark:border-gray-700/50"><h5 class="font-medium text-gray-800 dark:text-white text-sm mb-1 flex items-center gap-1.5"><i class="fas fa-plus-circle text-cri-red/80"></i>Conversazioni</h5><p class="text-gray-600 dark:text-gray-300 text-xs">Usa "+" per nuove chat. Clicca su una chat per riprenderla. Usa <i class="fas fa-trash-alt text-xs"></i> per eliminarla.</p></div><div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-100 dark:border-gray-700/50"><h5 class="font-medium text-gray-800 dark:text-white text-sm mb-1 flex items-center gap-1.5"><i class="fas fa-microphone text-cri-red/80"></i>Vocale (Beta)</h5><p class="text-gray-600 dark:text-gray-300 text-xs">Vai alla scheda "Vocale" per parlare con l'assistente.</p></div><!-- Analysis guide item removed --></div><div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30 mt-4"><h5 class="font-medium text-gray-800 dark:text-white text-sm mb-1">Disclaimer</h5><p class="text-gray-600 dark:text-gray-300 text-xs">Le risposte sono basate su documenti CRI. Per info ufficiali e complete, visita <a href="https://cri.it" target="_blank" rel="noopener noreferrer" class="text-cri-red hover:underline font-medium">cri.it</a>.</p></div></div></div><div class="p-3 border-t border-gray-100 dark:border-gray-700/50 flex justify-end"><button class="close-modal-btn px-4 py-1.5 bg-cri-red text-white rounded-md hover:bg-cri-darkred transition-colors text-sm font-medium shadow-sm">Ho capito</button></div></div></div>
+  <div id="privacy-modal" class="modal-container"><div class="modal-content bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-xl"><div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between"><h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fas fa-shield-alt text-cri-red"></i>Informativa Privacy</h3><button aria-label="Chiudi modale" class="close-modal-btn w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"><i class="fas fa-times"></i></button></div><div class="p-4 sm:p-6 max-h-[70vh] overflow-y-auto custom-scrollbar"><div class="space-y-3 text-sm"><p class="text-gray-600 dark:text-gray-300">La Croce Rossa Italiana tutela la tua privacy.</p><h4 class="font-medium text-gray-800 dark:text-white mt-3 text-base">Dati Raccolti e Utilizzo</h4><p class="text-gray-600 dark:text-gray-300 text-xs">Le domande e risposte vengono processate per fornire il servizio. Le interazioni possono essere usate in forma anonima per migliorare l'assistente.</p><h4 class="font-medium text-gray-800 dark:text-white mt-3 text-base">Conservazione Dati (Locale)</h4><p class="text-gray-600 dark:text-gray-300 text-xs">Le tue chat sono salvate <strong class="font-medium">solo sul tuo dispositivo</strong> (localStorage). Puoi eliminarle con <i class="fas fa-trash-alt text-xs"></i>. Nessun dato della chat viene salvato sui server CRI, tranne query anonime per il miglioramento AI.</p><div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 mt-4"><p class="text-gray-700 dark:text-gray-200 text-xs">Per la policy completa: <a href="https://cri.it/privacy" target="_blank" rel="noopener noreferrer" class="text-cri-red hover:underline font-medium">Privacy Policy CRI</a>.</p></div></div></div><div class="p-3 border-t border-gray-100 dark:border-gray-700/50 flex justify-end"><button class="close-modal-btn px-4 py-1.5 bg-cri-red text-white rounded-md hover:bg-cri-darkred transition-colors text-sm font-medium shadow-sm">Ho capito</button></div></div></div>
+  <div id="delete-chat-modal" class="modal-container"><div class="modal-content bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-md"><div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between"><h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fas fa-trash-alt text-cri-red"></i>Elimina chat</h3><button aria-label="Chiudi modale" class="close-modal-btn w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"><i class="fas fa-times"></i></button></div><div class="p-6"><p class="text-gray-600 dark:text-gray-300 text-sm">Sei sicuro? La chat verrà eliminata solo dal tuo dispositivo. L'azione è irreversibile.</p></div><div class="p-3 border-t border-gray-100 dark:border-gray-700/50 flex justify-end space-x-3"><button class="close-modal-btn px-4 py-1.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm font-medium">Annulla</button><button id="confirm-delete-btn" class="px-4 py-1.5 bg-cri-red text-white rounded-md hover:bg-cri-darkred transition-colors text-sm font-medium shadow-sm">Elimina</button></div></div></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://elevenlabs.io/convai-widget/index.js" async defer type="text/javascript"></script>
+
   <script>
-    // Elementi DOM
-    const queryForm = document.getElementById('queryForm');
-    const queryInput = document.getElementById('queryInput');
-    const chatContainer = document.getElementById('chatContainer');
-    const sendBtn = document.getElementById('sendBtn');
-    const newChatBtn = document.getElementById('newChatBtn');
-    const newChatBtnMobile = document.getElementById('newChatBtnMobile');
-    const chatsList = document.getElementById('chatsList');
-    const chatsListMobile = document.getElementById('chatsListMobile');
-    const mobileMenuButton = document.getElementById('mobileMenuButton');
-    const closeMobileMenu = document.getElementById('closeMobileMenu');
-    const mobileSidebar = document.getElementById('mobileSidebar');
-    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-    const lightModeBtn = document.getElementById('lightModeBtn');
-    const darkModeBtn = document.getElementById('darkModeBtn');
+    // --- Constants ---
+    const API_BASE_URL = '/api';
+    // Testo ESATTO (o quasi) del messaggio di benvenuto iniziale. PRENDILO DAL TUO HTML INIZIALE.
+    // IMPORTANTE: Rimuovi eventuali spazi extra o newline all'inizio/fine se non presenti nel vecchio payload.
+    //             Questo dovrebbe corrispondere a quanto trovato nel JSON del vecchio frontend.
+    //             NOTA: Ho rimosso il newline tra le due frasi basandomi sul JSON del vecchio frontend.
+    const INITIAL_ASSISTANT_WELCOME = "Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?";
+    const ASSISTANT_TYPING_PLACEHOLDER = "Assistente sta scrivendo..."; // Questo deve corrispondere a quello che il vecchio FE inviava
+
+    // --- DOM Elements ---
+    const messageInput = document.getElementById('message-input');
+    const chatForm = document.getElementById('chat-form');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+    const newChatBtn = document.getElementById('new-chat-btn');
+    const mobileNewChatBtn = document.getElementById('mobile-new-chat-btn');
+    const chatsList = document.getElementById('chats-list');
+    const mobileChatsList = document.getElementById('mobile-chats-list');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeMobileMenu = document.getElementById('close-mobile-menu');
+    const mobileSidebar = document.getElementById('mobile-sidebar');
+    const mobileBackdrop = document.getElementById('mobile-backdrop');
+    const mobileSidebarContent = mobileSidebar ? mobileSidebar.querySelector('.mobile-sidebar-content') : null;
+    const themeToggle = document.getElementById('theme-toggle');
     const htmlElement = document.documentElement;
-    
-    // Elementi modali
-    const deleteChatModal = document.getElementById('deleteChatModal');
-    const deleteChatModalContent = document.getElementById('deleteChatModalContent');
-    const closeDeleteChatBtn = document.getElementById('closeDeleteChatBtn');
-    const cancelDeleteChatBtn = document.getElementById('cancelDeleteChatBtn');
-    const confirmDeleteChatBtn = document.getElementById('confirmDeleteChatBtn');
-    
-    const guidaModal = document.getElementById('guidaModal');
-    const guidaModalContent = document.getElementById('guidaModalContent');
-    const closeGuidaBtn = document.getElementById('closeGuidaBtn');
-    const closeGuidaBtn2 = document.getElementById('closeGuidaBtn2');
-    const guidaBtn = document.getElementById('guidaBtn');
-    const guidaBtnMobile = document.getElementById('guidaBtnMobile');
-    
-    // Variabili per la gestione delle chat multiple
+    const deleteChatModal = document.getElementById('delete-chat-modal');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const guideModal = document.getElementById('guide-modal');
+    const privacyModal = document.getElementById('privacy-modal');
+    const guideBtn = document.getElementById('guide-btn');
+    const mobileGuideBtn = document.getElementById('mobile-guide-btn');
+    const privacyBtn = document.getElementById('privacy-btn');
+    const mobilePrivacyBtn = document.getElementById('mobile-privacy-btn');
+    const tabSwitcherBtns = document.querySelectorAll('.tab-switcher');
+    const mobileTabs = document.querySelectorAll('.mobile-tab-btn');
+    const tabChat = document.getElementById('tab-chat');
+    const tabVoice = document.getElementById('tab-voice');
+    // Analysis tab elements removed
+    const notificationBanner = document.getElementById('notification-banner');
+    const notificationText = document.getElementById('notification-text');
+    const closeNotification = document.getElementById('close-notification');
+    const suggestionChips = document.querySelectorAll('.suggestion-chip');
+
+    // --- State Variables ---
     let activeSessionId = null;
     let currentChatId = null;
     let chatToDelete = null;
     let isLoading = false;
     let chats = [];
-    
-    // API base URL
-    const API_BASE_URL = '/api';
-    
-    // Inizializzazione
+    let darkMode = localStorage.getItem('cri_theme') === 'dark';
+    let scrollTimeout = null;
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({ once: true, duration: 400, offset: 30, disable: 'mobile', easing: 'ease-out-cubic' });
+        initApp();
+        setupEventListeners();
+        observeElevenLabsWidget();
+    });
+
     function initApp() {
-      // Carica le chat salvate
-      loadSavedChats();
-      
-      // Se non ci sono chat, crea la prima
-      if (chats.length === 0) {
-        createNewChat();
-      } else {
-        // Altrimenti carica l'ultima chat attiva
-        const lastActiveChat = chats.find(chat => chat.isActive) || chats[0];
-        activateChat(lastActiveChat.id);
-      }
-      
-      // Carica il tema salvato
-      loadTheme();
-      
-      // Imposta il focus sull'input
-      setTimeout(() => {
-        queryInput.focus();
-      }, 500);
-      
-      // EventListener per orientamento dispositivo mobile
-      window.addEventListener('resize', checkOverflow);
-      checkOverflow();
-      
-      // Abilitare lo snap scrolling sui suggerimenti rapidi per dispositivi touch
-      enableSnapScrolling();
-    }
-    
-    // Abilita lo snap scrolling per l'area dei suggerimenti rapidi
-    function enableSnapScrolling() {
-      const suggestionContainer = document.querySelector('.suggestion-scroll');
-      if (suggestionContainer) {
-        // Aggiungi un leggero padding iniziale per migliorare l'aspetto
-        suggestionContainer.style.paddingLeft = '8px';
-        
-        // Gestisci lo scorrimento orizzontale su touch
-        suggestionContainer.addEventListener('touchstart', function(e) {
-          this.dataset.startX = e.touches[0].pageX;
-          this.dataset.scrollLeft = this.scrollLeft;
-        });
-        
-        suggestionContainer.addEventListener('touchmove', function(e) {
-          if (this.dataset.startX) {
-            const touchDiff = e.touches[0].pageX - this.dataset.startX;
-            this.scrollLeft = parseInt(this.dataset.scrollLeft) - touchDiff;
-            e.preventDefault(); // Previeni lo scroll verticale durante lo scorrimento orizzontale
-          }
-        });
-        
-        suggestionContainer.addEventListener('touchend', function() {
-          delete this.dataset.startX;
-        });
-      }
-    }
-    
-    // Controlla e corregge overflow su dispositivi mobili
-    function checkOverflow() {
-      // Controlla se il browser supporta innerHeight
-      if (window.innerHeight) {
-        document.body.style.height = `${window.innerHeight}px`;
-      }
-      
-      // Controlla overflow su dispositivi molto piccoli
-      if (window.innerWidth <= 320) {
-        document.querySelectorAll('.xxs-text-xs').forEach(el => {
-          el.style.fontSize = '0.7rem';
-        });
-      }
-      
-      // Fix per il problema dei bordi rosa a 663px
-      if (window.innerWidth >= 658 && window.innerWidth <= 668) {
-        document.querySelectorAll('.no-pink-border').forEach(el => {
-          el.style.borderColor = 'transparent';
-        });
-      }
-    }
-    
-    // Funzione per caricare il tema salvato
-    function loadTheme() {
-      const savedTheme = localStorage.getItem('cri_theme') || 'light';
-      setTheme(savedTheme);
-      
-      // Evidenzia il pulsante corretto
-      if (savedTheme === 'dark') {
-        lightModeBtn.classList.remove('bg-white', 'bg-opacity-30');
-        darkModeBtn.classList.add('bg-white', 'bg-opacity-30');
-      } else {
-        lightModeBtn.classList.add('bg-white', 'bg-opacity-30');
-        darkModeBtn.classList.remove('bg-white', 'bg-opacity-30');
-      }
-    }
-    
-    // Funzione per impostare il tema
-    function setTheme(theme) {
-      if (theme === 'dark') {
-        htmlElement.classList.add('dark');
-      } else {
-        htmlElement.classList.remove('dark');
-      }
-      localStorage.setItem('cri_theme', theme);
-    }
-    
-    // Funzione per caricare le chat salvate
-    function loadSavedChats() {
-      const savedChats = localStorage.getItem('cri_chats');
-      if (savedChats) {
-        try {
-          chats = JSON.parse(savedChats);
-        } catch (e) {
-          console.error('Errore nel parsing delle chat salvate:', e);
-          chats = [];
-        }
-      }
-      renderChatsList();
-    }
-    
-    // Funzione per salvare le chat
-    function saveChats() {
-      try {
-        localStorage.setItem('cri_chats', JSON.stringify(chats));
-      } catch (e) {
-        console.error('Errore nel salvataggio delle chat:', e);
-        // Se localStorage è pieno, rimuovi le chat più vecchie
-        if (e instanceof DOMException && (e.name === 'QuotaExceededError' || 
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-          // Mantieni solo le 5 chat più recenti
-          if (chats.length > 5) {
-            chats = chats.slice(0, 5);
-            localStorage.setItem('cri_chats', JSON.stringify(chats));
-          }
-        }
-      }
-    }
-    
-    // Funzione per creare una nuova chat
-    function createNewChat() {
-      const chatId = 'chat_' + Date.now();
-      const sessionId = 'session_' + Math.random().toString(36).substring(2, 8);
-      
-      // Disattiva tutte le chat esistenti
-      chats.forEach(chat => chat.isActive = false);
-      
-      // Crea la nuova chat
-      const newChat = {
-        id: chatId,
-        sessionId: sessionId,
-        title: 'Nuova conversazione',
-        lastUpdated: new Date().toISOString(),
-        isActive: true,
-        messages: []
-      };
-      
-      // Aggiungi la chat all'array e salva
-      chats.unshift(newChat);
-      saveChats();
-      
-      // Aggiorna l'interfaccia e attiva la chat
-      renderChatsList();
-      activateChat(chatId);
-      
-      // Resetta l'interfaccia della chat
-      resetChatInterface();
-      
-      return chatId;
-    }
-    
-    // Funzione per attivare una chat esistente
-    function activateChat(chatId) {
-      // Trova la chat nell'array
-      const chatIndex = chats.findIndex(chat => chat.id === chatId);
-      if (chatIndex === -1) return;
-      
-      // Disattiva tutte le chat
-      chats.forEach(chat => chat.isActive = false);
-      
-      // Attiva la chat selezionata
-      chats[chatIndex].isActive = true;
-      currentChatId = chatId;
-      activeSessionId = chats[chatIndex].sessionId;
-      
-      // Aggiorna l'interfaccia
-      renderChatsList();
-      
-      // Carica i messaggi della chat
-      loadChatMessages(chatId);
-      
-      // Chiudi il menu mobile se aperto
-      closeMobileSidebar();
-      
-      // Salva le modifiche
-      saveChats();
-    }
-    
-    // Funzione per eliminare una chat
-    function deleteChat(chatId) {
-      // Trova l'indice della chat
-      const chatIndex = chats.findIndex(chat => chat.id === chatId);
-      if (chatIndex === -1) return;
-      
-      // Rimuovi la chat dall'array
-      chats.splice(chatIndex, 1);
-      
-      // Se era la chat attiva, attiva un'altra chat
-      if (currentChatId === chatId) {
-        if (chats.length > 0) {
-          activateChat(chats[0].id);
+        loadTheme();
+        loadSavedChats();
+        if (chats.length === 0) {
+            createNewChat(); // Questo chiamerà activateChat che caricherà i msg (vuoti)
         } else {
-          // Se non ci sono più chat, crea una nuova
-          createNewChat();
+            // Ordina per data e attiva la più recente
+            chats.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+            // Trova l'ultima attiva o la prima se nessuna è attiva
+            const lastActive = chats.find(c => c.isActive) || chats[0];
+            activateChat(lastActive.id);
         }
-      }
-      
-      // Aggiorna l'interfaccia e salva
-      renderChatsList();
-      saveChats();
-    }
-    
-    // Funzione per renderizzare la lista delle chat
-    function renderChatsList() {
-      // Svuota le liste
-      chatsList.innerHTML = '';
-      chatsListMobile.innerHTML = '';
-      
-      // Aggiungi ogni chat alle liste
-      chats.forEach(chat => {
-        const chatItem = createChatListItem(chat);
-        const chatItemMobile = createChatListItem(chat);
-        
-        chatsList.appendChild(chatItem);
-        chatsListMobile.appendChild(chatItemMobile);
-      });
-    }
-    
-    // Funzione per creare un elemento della lista chat
-    function createChatListItem(chat) {
-      const chatItem = document.createElement('div');
-      chatItem.className = `group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1 no-pink-border ${chat.isActive ? 'bg-red-50 dark:bg-red-900/20 text-cri-red font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`;
-      chatItem.dataset.chatId = chat.id;
-      
-      chatItem.innerHTML = `
-        <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-          <i class="fas fa-comment-dots ${chat.isActive ? 'text-cri-red' : 'text-gray-500 dark:text-gray-400'}"></i>
-        </div>
-        <div class="flex-grow truncate">
-          ${chat.title}
-        </div>
-        <button class="delete-chat-btn text-gray-400 hover:text-cri-red p-1 transition-all touch-target" aria-label="Elimina chat">
-          <i class="fas fa-trash-alt"></i>
-        </button>
-      `;
-      
-      // Evento per attivare la chat
-      chatItem.addEventListener('click', (e) => {
-        if (!e.target.closest('.delete-chat-btn')) {
-          activateChat(chat.id);
-        }
-      });
-      
-      // Evento per eliminare la chat
-      const deleteBtn = chatItem.querySelector('.delete-chat-btn');
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showDeleteChatModal(chat.id);
-      });
-      
-      return chatItem;
-    }
-    
-    // Funzione per caricare i messaggi di una chat
-    function loadChatMessages(chatId) {
-      // Trova la chat
-      const chat = chats.find(c => c.id === chatId);
-      if (!chat) return;
-      
-      // Pulisci il container
-      chatContainer.innerHTML = '';
-      
-      // Aggiungi il messaggio di benvenuto
-      const welcomeMessage = document.createElement('div');
-      welcomeMessage.className = 'flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border';
-      welcomeMessage.innerHTML = `
-        <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
-          <i class="fas fa-robot text-cri-red text-3xl"></i>
-        </div>
-        <div class="flex-grow text-center sm:text-left">
-          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
-        </div>
-      `;
-      chatContainer.appendChild(welcomeMessage);
-      
-      // Aggiungi i messaggi salvati
-      if (chat.messages && chat.messages.length > 0) {
-        chat.messages.forEach(msg => {
-          addMessage(msg.text, msg.isUser, msg.sources);
-        });
-      }
-      
-      // Scorri in fondo
-      setTimeout(() => {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }, 100);
-    }
-    
-    // Funzione per resettare l'interfaccia della chat
-    function resetChatInterface() {
-      chatContainer.innerHTML = '';
-      const welcomeMessage = document.createElement('div');
-      welcomeMessage.className = 'flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border';
-      welcomeMessage.innerHTML = `
-        <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
-          <i class="fas fa-robot text-cri-red text-3xl"></i>
-        </div>
-        <div class="flex-grow text-center sm:text-left">
-          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
-        </div>
-      `;
-      chatContainer.appendChild(welcomeMessage);
-    }
-    
-    // Funzione per adattare l'altezza della textarea
-    function adjustTextareaHeight() {
-      queryInput.style.height = 'auto';
-      queryInput.style.height = Math.min(queryInput.scrollHeight, 128) + 'px'; // 128px = 8rem (max-h-32)
-    }
-    
-    // Funzione per aggiungere un messaggio alla chat
-    function addMessage(text, isUser = false, sources = null) {
-      const messageDiv = document.createElement('div');
-      
-      if (isUser) {
-        messageDiv.className = 'flex justify-end slide-in-right';
-        messageDiv.innerHTML = `
-          <div class="bg-cri-red bg-opacity-5 dark:bg-red-900/10 border border-cri-red border-opacity-10 dark:border-opacity-20 p-3 sm:p-4 rounded-2xl rounded-tr-none max-w-[85%] sm:max-w-md md:max-w-2xl shadow-sm no-pink-border">
-            <div class="text-gray-800 dark:text-gray-200 text-sm sm:text-base break-words">${text}</div>
-          </div>
-        `;
-      } else {
-        messageDiv.className = 'flex justify-start slide-in-left';
-        
-        // Converter il markdown
-        const htmlContent = marked.parse(text);
-        
-        let sourcesHTML = '';
-        if (sources && sources.length > 0) {
-          // Preparazione delle fonti
-          const uniqueSources = new Set();
-          sources.forEach(source => {
-            if (source.metadata && source.metadata.filename) {
-              uniqueSources.add(source.metadata.filename);
-            }
-          });
-          
-          sourcesHTML = `
-            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 no-pink-border">
-              <div class="flex justify-between items-center cursor-pointer sources-toggle">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Fonti: ${uniqueSources.size}</p>
-                <button class="text-xs text-cri-red hover:text-cri-darkred p-1 touch-target" aria-label="Mostra fonti">
-                  <i class="fas fa-chevron-down toggle-icon"></i>
-                </button>
-              </div>
-              <div class="sources-content hidden mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <ul class="space-y-1">
-                  ${Array.from(uniqueSources).map(source => `
-                    <li class="flex items-start">
-                      <i class="fas fa-file-alt mr-1.5 mt-0.5 text-cri-red opacity-70"></i>
-                      <span>${source.replace('.md', '')}</span>
-                    </li>
-                  `).join('')}
-                </ul>
-              </div>
-            </div>
-          `;
-        }
-        
-        messageDiv.innerHTML = `
-          <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl rounded-tl-none max-w-[85%] sm:max-w-md md:max-w-2xl shadow-md border border-gray-100 dark:border-gray-700 no-pink-border">
-            <div class="prose prose-sm dark:prose-invert max-w-none dark:text-gray-300 text-sm sm:text-base break-words">${htmlContent}</div>
-            ${sourcesHTML}
-          </div>
-        `;
-      }
-      
-      // Aggiungi l'evento toggle per le fonti
-      chatContainer.appendChild(messageDiv);
-      
-      // Aggiungi evento per toggle fonti se presente
-      const toggleButton = messageDiv.querySelector('.sources-toggle');
-      if (toggleButton) {
-        toggleButton.addEventListener('click', function() {
-          const content = this.nextElementSibling;
-          const icon = this.querySelector('.toggle-icon');
-          
-          if (content.classList.contains('hidden')) {
-            content.classList.remove('hidden');
-            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-          } else {
-            content.classList.add('hidden');
-            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-          }
-        });
-      }
-      
-      // Scroll to bottom
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      
-      // Salva il messaggio nella chat corrente
-      if (currentChatId) {
-        const chatIndex = chats.findIndex(chat => chat.id === currentChatId);
-        if (chatIndex !== -1) {
-          if (!chats[chatIndex].messages) {
-            chats[chatIndex].messages = [];
-          }
-          
-          // Aggiungi il messaggio
-          chats[chatIndex].messages.push({
-            text: text,
-            isUser: isUser,
-            sources: sources,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Aggiorna il titolo della chat con il primo messaggio dell'utente
-          if (isUser && chats[chatIndex].title === 'Nuova conversazione' && chats[chatIndex].messages.filter(m => m.isUser).length === 1) {
-            // Limita il titolo a 30 caratteri
-            chats[chatIndex].title = text.length > 30 ? text.substring(0, 27) + '...' : text;
-            renderChatsList();
-          }
-          
-          // Aggiorna il timestamp
-          chats[chatIndex].lastUpdated = new Date().toISOString();
-          
-          // Salva le modifiche
-          saveChats();
-        }
-      }
-    }
-    
-    // Funzione per mostrare il loader di "sta scrivendo..."
-    function showTypingIndicator() {
-      const typingDiv = document.createElement('div');
-      typingDiv.id = 'typingIndicator';
-      typingDiv.className = 'flex justify-start slide-in-left';
-      typingDiv.innerHTML = `
-        <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none shadow-md border border-gray-100 dark:border-gray-700 flex items-center no-pink-border">
-          <div class="flex space-x-1 px-2">
-            <div class="w-2 h-2 bg-cri-red rounded-full animate-typing typing-dot"></div>
-            <div class="w-2 h-2 bg-cri-red rounded-full animate-typing typing-dot"></div>
-            <div class="w-2 h-2 bg-cri-red rounded-full animate-typing typing-dot"></div>
-          </div>
-          <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">Assistente sta scrivendo...</span>
-        </div>
-      `;
-      chatContainer.appendChild(typingDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-    
-    // Funzione per rimuovere il loader
-    function removeTypingIndicator() {
-      const indicator = document.getElementById('typingIndicator');
-      if (indicator) {
-        indicator.remove();
-      }
-    }
-    
-    // Funzione per inviare una domanda al backend
-    async function sendQuestion(question) {
-      try {
-        // Verifica che ci sia una sessione
-        if (!activeSessionId) {
-          console.error("sessionId non definito in sendQuestion");
-          return;
-        }
-        
-        // Mostra l'indicatore di digitazione
-        showTypingIndicator();
-        
-        // Costruisci la cronologia della conversazione da inviare al backend
-        const conversationHistory = [];
-        
-        // Ottieni tutti i messaggi tranne il primo di benvenuto con l'illustrazione
-        const messages = Array.from(chatContainer.querySelectorAll('.flex > div')).slice(1);
-        
-        messages.forEach(msg => {
-          const isBot = !msg.classList.contains('bg-cri-red');
-          let content = msg.textContent.trim();
-          
-          // Rimuovi il testo delle fonti se presente
-          if (isBot && content.includes('Fonti:')) {
-            content = content.substring(0, content.indexOf('Fonti:')).trim();
-          }
-          
-          if (content) {
-            conversationHistory.push({
-              type: isBot ? "assistant" : "user",
-              content: content
-            });
-          }
-        });
-        
-        // Chiamata API al backend
-        const requestData = {
-          query: question,
-          session_id: activeSessionId,
-          conversation_history: conversationHistory,
-          include_prompt: true // Richiediamo il prompt completo
-        };
-        
-        // Visualizza il contesto che viene inviato al backend
-        console.log("Contesto inviato al backend:", requestData);
-        
-        const response = await fetch(`${API_BASE_URL}/query`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        });
-        
-        const data = await response.json();
-        
-        // Log iniziale più evidente che indica l'inizio dell'analisi
-        console.log('%c🔍 ANALISI RAG PER LA QUERY: "' + question + '"', 
-            'color: white; background-color: #0066cc; font-weight: bold; font-size: 16px; padding: 8px 12px; margin: 5px 0; border-radius: 4px; text-align: center; display: block;');
-        
-        // Visualizza la risposta completa per debugging
-        console.log("Risposta completa dal backend:", data);
-        
-        // Visualizzazione stilizzata dei chunks utilizzati per la risposta
-        if (data.source_documents && data.source_documents.length > 0) {
-          console.log(`%c📚 ${data.source_documents.length} chunks utilizzati per generare la risposta:`, 'color: #e3000f; font-weight: bold; font-size: 16px; text-shadow: 1px 1px 1px rgba(0,0,0,0.2); background-color: #ffeeee; padding: 5px 10px; border-radius: 4px; border-left: 4px solid #e3000f;');
-          
-          data.source_documents.forEach((doc, index) => {
-            console.group(`%c📄 Chunk #${index + 1}`, 'color: #e3000f; font-weight: bold; font-size: 14px; background-color: #fff5f5; padding: 3px 8px; border-radius: 3px;');
-            
-            // Prova a mostrare il testo completo senza troncamento
-            let foundText = false;
-            
-            // Cerca nei campi di testo comuni
-            const textFields = ['text', 'page_content', 'content'];
-            for (const field of textFields) {
-              if (doc[field]) {
-                console.log(`%c📝 Testo completo:`, 'color: #333; background-color: #f9f9f9; font-weight: bold; padding: 3px 6px; border-radius: 3px; border-left: 3px solid #666;');
-                
-                // Visualizza in un box formattato per leggibilità
-                console.log('%c' + doc[field], 'background-color: #f8f8f8; color: #222; padding: 12px; border-radius: 6px; display: block; white-space: pre-wrap; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; font-family: "Consolas", monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.05);');
-                foundText = true;
-                break;  // Se troviamo un campo, usciamo dal ciclo
-              }
-            }
-            
-            // Se non è stato trovato in nessun campo, prova a cercare il testo in modo ricorsivo
-            if (!foundText) {
-              console.log(`%c🔍 Ricerca testo nei campi disponibili...`, 'color: #0066cc; font-weight: bold;');
-              
-              const findTextRecursively = (obj, path = '') => {
-                for (const key in obj) {
-                  if (typeof obj[key] === 'string' && obj[key].length > 100) {
-                    console.log(`%c📃 Testo trovato in '${path}${key}':`, 'color: #333; background-color: #f0f8ff; font-weight: bold; padding: 3px 6px; border-radius: 3px; border-left: 3px solid #0066cc;');
-                    console.log('%c' + obj[key], 'background-color: #f8f8f8; color: #222; padding: 12px; border-radius: 6px; display: block; white-space: pre-wrap; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; font-family: "Consolas", monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.05);');
-                    foundText = true;
-                    return;
-                  } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    findTextRecursively(obj[key], `${path}${key}.`);
-                    if (foundText) return;  // Se abbiamo trovato un testo, interrompiamo la ricorsione
-                  }
-                }
-              };
-              
-              findTextRecursively(doc);
-              
-              if (!foundText) {
-                console.log(`%c❌ Nessun testo trovato in questo documento`, 'color: #999; font-style: italic;');
-                console.log(doc);  // Mostra comunque l'oggetto completo
-              }
-            }
-            
-            // Visualizza i metadati (filename, etc)
-            if (doc.metadata) {
-              console.log(`%c📋 Metadati:`, 'color: #333; background-color: #f0f8ff; font-weight: bold; padding: 3px 6px; border-radius: 3px; border-left: 3px solid #0066cc;');
-              
-              try {
-                // Crea una versione formattata dei metadati
-                const metadataTable = {};
-                for (const key in doc.metadata) {
-                  const value = doc.metadata[key];
-                  metadataTable[key] = typeof value === 'string' && value.length > 100 
-                    ? value.substring(0, 100) + '...' 
-                    : value;
-                }
-                console.table(metadataTable);
-              } catch (e) {
-                console.log(doc.metadata);  // Fallback in caso di errore
-              }
-            }
-            
-            console.groupEnd();
-          });
-        } else {
-          console.log("%c❌ Nessun chunk RAG utilizzato per questa risposta", "color: #e3000f; font-weight: bold; background-color: #ffeeee; padding: 5px 10px; border-radius: 4px;");
-        }
-        
-        // Visualizza la query condensata/riformulata se presente
-        if (data.condensed_question) {
-          console.log(`%c🔍 Query riformulata: "${data.condensed_question}"`, 'color: #0066cc; font-weight: bold; background-color: #f0f8ff; padding: 5px 10px; border-radius: 4px; border-left: 4px solid #0066cc;');
-        }
-        
-        // Visualizza il prompt completo se presente
-        if (data.full_prompt) {
-          console.log(`%c📝 Prompt completo utilizzato:`, 'color: #6a0dad; font-weight: bold; font-size: 16px; text-shadow: 1px 1px 1px rgba(0,0,0,0.2); background-color: #f8f4ff; padding: 5px 10px; border-radius: 4px; border-left: 4px solid #6a0dad;');
-          console.log('%c' + data.full_prompt, 'background-color: #f8f4ff; color: #222; padding: 15px; border-radius: 6px; display: block; white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid #d4c6e7; font-family: "Consolas", monospace; box-shadow: inset 0 0 10px rgba(106,13,173,0.1); line-height: 1.4;');
-        } else {
-          console.log(`%c❌ Prompt completo non disponibile nella risposta`, 'color: #6a0dad; font-weight: bold; background-color: #f8f4ff; padding: 5px 10px; border-radius: 4px;');
-        }
-        
-        // Simula un piccolo ritardo per una UX più naturale
-        setTimeout(() => {
-          // Rimuovi l'indicatore di digitazione
-          removeTypingIndicator();
-          
-          if (response.ok) {
-            // Aggiungi la risposta dell'assistente alla chat
-            addMessage(data.answer, false, data.source_documents);
-          } else {
-            // Gestione degli errori
-            addMessage("Mi dispiace, si è verificato un errore. Riprova più tardi o contatta il supporto.");
-            console.error("Errore nella richiesta:", data);
-          }
-          
-          isLoading = false;
-          
-          // Rimetti focus sull'input dopo la risposta
-          setTimeout(() => {
-            queryInput.focus();
-          }, 300);
-        }, 700);
-        
-      } catch (error) {
-        // Gestione degli errori di rete
-        setTimeout(() => {
-          removeTypingIndicator();
-          addMessage("Mi dispiace, si è verificato un errore di connessione. Verifica la tua connessione e riprova.");
-          console.error("Errore di rete:", error);
-          isLoading = false;
-          
-          // Rimetti focus sull'input dopo l'errore
-          setTimeout(() => {
-            queryInput.focus();
-          }, 300);
-        }, 500);
-      }
-    }
-    
-    // Gestione dell'invio del messaggio
-    queryForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const query = queryInput.value.trim();
-      if (!query || isLoading) return;
-      
-      // Aggiungi il messaggio dell'utente alla chat
-      addMessage(query, true);
-      
-      // Pulisci l'input
-      queryInput.value = '';
-      queryInput.style.height = 'auto';
-      
-      // Disabilita il pulsante di invio
-      sendBtn.disabled = true;
-      
-      // Imposta lo stato di caricamento
-      isLoading = true;
-      
-      // Invia la domanda al backend
-      await sendQuestion(query);
-    });
-    
-    // Gestione di Enter e Shift+Enter nella textarea
-    queryInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        // Se è premuto Shift+Enter, consenti l'andata a capo
-        if (e.shiftKey) {
-          return;
-        }
-        
-        // Se è premuto solo Enter, invia il messaggio
-        e.preventDefault(); // Previeni l'andata a capo predefinita
-        
-        // Simula il click sul pulsante Invia se c'è testo e non siamo in stato di caricamento
-        if (this.value.trim() && !isLoading) {
-          queryForm.dispatchEvent(new Event('submit'));
-        }
-      }
-    });
-    
-    // Adatta l'altezza della textarea mentre si scrive
-    queryInput.addEventListener('input', function() {
-      adjustTextareaHeight();
-      sendBtn.disabled = this.value.trim() === '';
-    });
-    
-    // Aggiungi funzionalità al pulsante invio
-    sendBtn.addEventListener('click', function() {
-      if (queryInput.value.trim() && !isLoading) {
-        queryForm.dispatchEvent(new Event('submit'));
-      }
-    });
-    
-    // Gestione della nuova chat
-    newChatBtn.addEventListener('click', createNewChat);
-    newChatBtnMobile.addEventListener('click', () => {
-      createNewChat();
-      closeMobileSidebar();
-    });
-    
-    // Gestione del menu mobile
-    mobileMenuButton.addEventListener('click', function() {
-      mobileSidebar.classList.remove('-translate-x-full');
-      mobileMenuOverlay.classList.remove('hidden');
-      document.body.classList.add('overflow-hidden');
-    });
-    
-    function closeMobileSidebar() {
-      mobileSidebar.classList.add('-translate-x-full');
-      mobileMenuOverlay.classList.add('hidden');
-      document.body.classList.remove('overflow-hidden');
-    }
-    
-    closeMobileMenu.addEventListener('click', closeMobileSidebar);
-    mobileMenuOverlay.addEventListener('click', closeMobileSidebar);
-    
-    // Gestione del cambio tema
-    lightModeBtn.addEventListener('click', function() {
-      setTheme('light');
-      lightModeBtn.classList.add('bg-white', 'bg-opacity-30');
-      darkModeBtn.classList.remove('bg-white', 'bg-opacity-30');
-    });
-    
-    darkModeBtn.addEventListener('click', function() {
-      setTheme('dark');
-      darkModeBtn.classList.add('bg-white', 'bg-opacity-30');
-      lightModeBtn.classList.remove('bg-white', 'bg-opacity-30');
-    });
-    
-    // Gestione dei suggerimenti rapidi (click sui bottoni delle domande frequenti)
-    document.querySelectorAll('.suggestion-scroll button').forEach(button => {
-      button.addEventListener('click', function() {
-        if (isLoading) return;
-        
-        const question = this.textContent.trim();
-        queryInput.value = question;
         adjustTextareaHeight();
-        sendBtn.disabled = false;
-        
-        // Simula l'invio dopo un breve ritardo
-        setTimeout(() => {
-          queryForm.dispatchEvent(new Event('submit'));
-        }, 100);
-      });
-    });
-    
-    // Funzione per mostrare il modal di conferma eliminazione chat
-    function showDeleteChatModal(chatId) {
-      chatToDelete = chatId;
-      deleteChatModal.classList.remove('hidden');
-      setTimeout(() => {
-        deleteChatModalContent.classList.remove('scale-95', 'opacity-0');
-      }, 10);
+        switchTab('chat'); // Assicurati che la tab chat sia visibile all'inizio
+        // updateWelcomeMessageTime() viene chiamato da loadChatMessages
+        setTimeout(() => { messageInput.focus(); }, 300);
     }
-    
-    // Funzione per chiudere il modal di eliminazione
-    function closeDeleteChatModal() {
-      deleteChatModalContent.classList.add('scale-95', 'opacity-0');
-      setTimeout(() => {
-        deleteChatModal.classList.add('hidden');
-        chatToDelete = null;
-      }, 300);
+
+    // --- Event Listeners ---
+    function setupEventListeners() {
+        messageInput.addEventListener('input', handleInput);
+        messageInput.addEventListener('keydown', handleKeydown);
+        chatForm.addEventListener('submit', handleSubmit);
+        scrollBottomBtn.addEventListener('click', () => scrollToBottom(true));
+        chatMessages.addEventListener('scroll', handleScroll);
+        tabSwitcherBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.id.split('-')[1])));
+        mobileTabs.forEach(tab => tab.addEventListener('click', () => { switchTab(tab.dataset.tab); closeMobileSidebar(); }));
+        themeToggle.addEventListener('click', toggleTheme);
+        mobileMenuBtn.addEventListener('click', openMobileSidebar);
+        closeMobileMenu.addEventListener('click', closeMobileSidebar);
+        mobileBackdrop.addEventListener('click', closeMobileSidebar);
+        newChatBtn.addEventListener('click', createNewChat);
+        mobileNewChatBtn.addEventListener('click', () => { createNewChat(); closeMobileSidebar(); });
+        guideBtn.addEventListener('click', () => showModal(guideModal));
+        if (mobileGuideBtn) mobileGuideBtn.addEventListener('click', () => { showModal(guideModal); closeMobileSidebar(); });
+        privacyBtn.addEventListener('click', () => showModal(privacyModal));
+        if (mobilePrivacyBtn) mobilePrivacyBtn.addEventListener('click', () => { showModal(privacyModal); closeMobileSidebar(); });
+        document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', closeAllModals));
+        document.querySelectorAll('.modal-container').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeAllModals(); }));
+        confirmDeleteBtn.addEventListener('click', handleDeleteConfirm);
+        suggestionChips.forEach(chip => chip.addEventListener('click', handleSuggestionClick));
+        closeNotification.addEventListener('click', hideNotification);
+        window.addEventListener('resize', handleScroll);
     }
-    
-    // Funzione per mostrare il modal della guida
-    function showGuidaModal() {
-      guidaModal.classList.remove('hidden');
-      setTimeout(() => {
-        guidaModalContent.classList.remove('scale-95', 'opacity-0');
-      }, 10);
+
+    // --- Event Handlers (Brief) ---
+    function handleInput() { adjustTextareaHeight(); sendMessageBtn.disabled = messageInput.value.trim() === ''; }
+    function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (messageInput.value.trim() && !isLoading) chatForm.requestSubmit(); } } // Usa requestSubmit
+    function handleSubmit(e) { e.preventDefault(); const msg = messageInput.value.trim(); if (!msg || isLoading) return; addMessage(msg, true); messageInput.value = ''; adjustTextareaHeight(); sendMessageBtn.disabled = true; messageInput.focus(); isLoading = true; showTypingIndicator(); sendQuestion(msg); }
+    function handleScroll() { clearTimeout(scrollTimeout); scrollTimeout = setTimeout(toggleScrollButton, 150); }
+    function toggleTheme() { darkMode = !darkMode; setTheme(darkMode ? 'dark' : 'light'); }
+    function handleDeleteConfirm() { if (chatToDelete) { deleteChat(chatToDelete); closeAllModals(); } }
+    function handleSuggestionClick() { if (isLoading) return; const q = this.textContent.trim(); messageInput.value = q; adjustTextareaHeight(); sendMessageBtn.disabled = false; messageInput.focus(); setTimeout(() => chatForm.requestSubmit(), 50); } // Usa requestSubmit
+
+    // --- Core Chat & State Logic ---
+    function loadTheme() { const saved = localStorage.getItem('cri_theme') || 'light'; darkMode = (saved === 'dark'); setTheme(saved); }
+    function setTheme(theme) { htmlElement.classList.toggle('dark', theme === 'dark'); localStorage.setItem('cri_theme', theme); const icon = themeToggle.querySelector('i'); icon.classList.toggle('fa-moon', theme === 'light'); icon.classList.toggle('fa-sun', theme === 'dark'); }
+    function loadSavedChats() { const s = localStorage.getItem('cri_chats'); chats = []; if (s) { try { const p = JSON.parse(s); if (Array.isArray(p)) chats = p; else localStorage.removeItem('cri_chats'); } catch (e) { console.error(e); localStorage.removeItem('cri_chats');}} chats=chats.map(c=>({id:c.id||`c_${Date.now()}`,sessionId:c.sessionId||`s_${Date.now()}`,title:c.title||'Chat',lastUpdated:c.lastUpdated||new Date().toISOString(),isActive:c.isActive||!1,messages:Array.isArray(c.messages)?c.messages:[],createdAt:c.createdAt||c.lastUpdated||new Date().toISOString()})); renderChatsList(); }
+    function saveChats() { try { chats.sort((a,b)=>new Date(b.lastUpdated)-new Date(a.lastUpdated));localStorage.setItem('cri_chats',JSON.stringify(chats))}catch(e){console.error(e);if(e instanceof DOMException&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED')&&chats.length>10){chats=chats.slice(0,10);localStorage.setItem('cri_chats',JSON.stringify(chats));showNotification("Spazio esaurito, chat vecchie rimosse.","warning")}else showNotification("Errore salvataggio: Spazio esaurito.","error")}}
+    function createNewChat() { const n=new Date().toISOString(),c='chat_'+Date.now(),s='session_'+Date.now()+'_'+Math.random().toString(36).substring(2,8);chats.forEach(h=>h.isActive=!1);const newC={id:c,sessionId:s,title:'Nuova conversazione',lastUpdated:n,isActive:!0,messages:[],createdAt:n};chats.unshift(newC);saveChats();renderChatsList();activateChat(c);switchTab('chat');return c;}
+    function activateChat(id) { const i=chats.findIndex(c=>c.id===id);if(i===-1){if(chats.length>0)activateChat(chats[0].id);else createNewChat();return}chats.forEach((c,idx)=>c.isActive=idx===i);currentChatId=id;activeSessionId=chats[i].sessionId;renderChatsList();loadChatMessages(id);closeMobileSidebar();saveChats();switchTab('chat');setTimeout(()=>messageInput.focus(),100)}
+    function deleteChat(id) { const i=chats.findIndex(c=>c.id===id);if(i===-1)return;const act=chats[i].isActive;chats.splice(i,1);if(act){if(chats.length>0){chats.sort((a,b)=>new Date(b.lastUpdated)-new Date(a.lastUpdated));activateChat(chats[0].id)}else createNewChat()}else renderChatsList();saveChats()}
+    function renderChatsList() { chatsList.innerHTML='';mobileChatsList.innerHTML='';chats.sort((a,b)=>new Date(b.lastUpdated)-new Date(a.lastUpdated));if(chats.length===0){const p='<p class="text-center text-xs text-gray-400 dark:text-gray-500 p-4">Nessuna chat.</p>';chatsList.innerHTML=p;mobileChatsList.innerHTML=p;return}chats.forEach(c=>{const d=createChatListItem(c),m=createChatListItem(c);chatsList.appendChild(d);mobileChatsList.appendChild(m)})}
+    function createChatListItem(c) {
+        const i=document.createElement('div');
+        i.className=`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors mb-1 group ${c.isActive?'bg-red-100 dark:bg-red-900/40':'hover:bg-gray-100 dark:hover:bg-gray-700/50'}`;
+        i.dataset.chatId=c.id;
+        const d=new Date(c.lastUpdated),n=new Date(),f=d.toDateString()===n.toDateString()?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString([],{month:'short',day:'numeric'});
+        i.innerHTML=`
+            <div class="flex items-center flex-1 overflow-hidden gap-2">
+                <div class="w-8 h-8 rounded-lg ${c.isActive?'bg-cri-red text-white':'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'} flex items-center justify-center flex-shrink-0 transition-colors">
+                    <i class="fas fa-comment-dots text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="truncate text-sm font-medium ${c.isActive?'text-cri-red dark:text-red-300':'text-gray-700 dark:text-gray-200'}">${c.title}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">${f}</div>
+                </div>
+            </div>
+            
+            <button aria-label="Elimina ${c.title}" class="delete-chat-btn ml-1 p-1.5 rounded-full text-gray-400 hover:text-cri-red hover:bg-red-100 dark:hover:bg-red-900/30 transition-all focus:opacity-100 flex-shrink-0">
+                <i class="fas fa-trash-alt text-xs"></i>
+            </button>
+        `;
+        i.addEventListener('click',e=>{if(!e.target.closest('.delete-chat-btn'))activateChat(c.id)});
+        const b=i.querySelector('.delete-chat-btn');
+        b.addEventListener('click',e=>{e.stopPropagation();chatToDelete=c.id;showModal(deleteChatModal)});
+        return i
     }
-    
-    // Funzione per chiudere il modal della guida
-    function closeGuidaModal() {
-      guidaModalContent.classList.add('scale-95', 'opacity-0');
-      setTimeout(() => {
-        guidaModal.classList.add('hidden');
-      }, 300);
+    function resetChatInterface() { chatMessages.innerHTML = ''; } // Svuota completamente
+    function loadChatMessages(id) {
+        resetChatInterface(); // Svuota prima di caricare
+        const chat = chats.find(c => c.id === id);
+        if (!chat) return;
+
+        // Aggiungi il messaggio di benvenuto standard se la chat è vuota o inizia con utente
+        // Lo aggiungiamo solo visivamente, non verrà salvato di nuovo a meno che non fosse già il primo messaggio.
+        let welcomeAdded = false;
+        if (!chat.messages || chat.messages.length === 0 || chat.messages[0].isUser) {
+             addWelcomeMessageToUI(chat.createdAt || chat.lastUpdated);
+             welcomeAdded = true;
+        }
+
+        // Aggiungi i messaggi salvati
+        if (chat.messages && chat.messages.length > 0) {
+            chat.messages.forEach(msg => {
+                 // Se il primissimo messaggio salvato è l'assistente di benvenuto, NON aggiungerlo di nuovo
+                 // perché l'abbiamo già aggiunto visivamente con addWelcomeMessageToUI.
+                 // Altrimenti, aggiungi il messaggio.
+                 const isFirstSavedWelcome = chat.messages.indexOf(msg) === 0 && !msg.isUser && msg.text.includes("Benvenuto all'Assistente CRI");
+                 if (!isFirstSavedWelcome) {
+                    addMessageToUI(msg.text, msg.isUser, msg.timestamp, msg.sources);
+                 } else if (!welcomeAdded) {
+                     // Se non avevamo aggiunto il benvenuto prima (perché il primo messaggio ERA l'utente),
+                     // ma il primo messaggio salvato È il benvenuto, lo aggiungiamo ora.
+                      addWelcomeMessageToUI(msg.timestamp, msg.text);
+                 }
+            });
+        }
+        scrollToBottom();
     }
-    
-    // Event listeners per il modal eliminazione
-    closeDeleteChatBtn.addEventListener('click', closeDeleteChatModal);
-    cancelDeleteChatBtn.addEventListener('click', closeDeleteChatModal);
-    confirmDeleteChatBtn.addEventListener('click', function() {
-      if (chatToDelete) {
-        deleteChat(chatToDelete);
-        closeDeleteChatModal();
-      }
-    });
-    
-    // Event listeners per il modal guida
-    guidaBtn.addEventListener('click', showGuidaModal);
-    guidaBtnMobile.addEventListener('click', () => {
-      showGuidaModal();
-      closeMobileSidebar();
-    });
-    closeGuidaBtn.addEventListener('click', closeGuidaModal);
-    closeGuidaBtn2.addEventListener('click', closeGuidaModal);
-    
-    // Chiudi i modal cliccando all'esterno
-    deleteChatModal.addEventListener('click', function(e) {
-      if (e.target === deleteChatModal) {
-        closeDeleteChatModal();
-      }
-    });
-    
-    guidaModal.addEventListener('click', function(e) {
-      if (e.target === guidaModal) {
-        closeGuidaModal();
-      }
-    });
-    
-    // Fix per dispositivi iOS
-    document.addEventListener('gesturestart', function(e) {
-      e.preventDefault(); // Blocca lo zoom con gesture
-    });
-    
-    // Gestisci back button su mobile
-    window.addEventListener('popstate', function() {
-      if (!mobileSidebar.classList.contains('-translate-x-full')) {
-        closeMobileSidebar();
-        history.pushState(null, document.title, window.location.href);
-      }
-    });
-    
-    // Inizializzazione
-    initApp();
-    adjustTextareaHeight();
-    
-    // Gestione per l'evidenziazione problema bordi rosa a 663px
-    function checkPinkBorderIssue() {
-      const width = window.innerWidth;
-      if (width >= 658 && width <= 668) {
-        document.querySelectorAll('.no-pink-border').forEach(el => {
-          el.style.borderColor = 'transparent';
-        });
-      } else {
-        document.querySelectorAll('.no-pink-border').forEach(el => {
-          el.style.borderColor = '';  // Reset to CSS value
-        });
-      }
+    function addWelcomeMessageToUI(ts = null, customText = null) {
+        // Assicurati che non ci sia già un messaggio di benvenuto nel DOM
+        if (chatMessages.querySelector('.fa-robot')) return;
+
+        const d = document.createElement('div');
+        d.className = 'flex flex-col md:flex-row items-start gap-3 md:gap-4 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 animate-slide-in-left message-bubble'; // Added message-bubble
+        const welcomeText = customText || "Benvenuto all'Assistente CRI\nSono qui per rispondere alle tue domande sulla Croce Rossa Italiana. Come posso aiutarti oggi?";
+        const timeString = ts ? new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        d.innerHTML = `
+            <div class="w-10 h-10 md:w-11 md:h-11 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center"><i class="fas fa-robot text-cri-red text-xl md:text-2xl"></i></div>
+            <div class="flex-grow">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-1 font-display">Assistente CRI</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">${welcomeText}</p>
+                <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-left">${timeString}</div>
+            </div>`;
+        // Inserisci il messaggio di benvenuto all'inizio del contenitore
+        if (chatMessages.firstChild) {
+            chatMessages.insertBefore(d, chatMessages.firstChild);
+        } else {
+            chatMessages.appendChild(d);
+        }
     }
-    
-    // Check for pink border issue on initial load
-    checkPinkBorderIssue();
-    
-    // Check for pink border issue on resize
-    window.addEventListener('resize', function() {
-      checkPinkBorderIssue();
-    });
+    function adjustTextareaHeight() { const maxH=120;messageInput.style.height='auto';const sH=messageInput.scrollHeight;messageInput.style.height=Math.min(sH,maxH)+'px';messageInput.style.overflowY=sH>maxH?'auto':'hidden';}
+    function addMessage(txt,isU,src=null){const ts=new Date().toISOString();addMessageToUI(txt,isU,ts,src);saveMessageToChat(txt,isU,src,ts)} // Pass timestamp to save
+    function addMessageToUI(txt,isU,ts=null,src=null){const d=document.createElement('div');d.className=`message-bubble animate-${isU?'slide-in-right':'slide-in-left'} clear-both flex ${isU?'justify-end':'justify-start'} mb-3`;const tS=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let mC='';if(isU){mC=`<div class="bg-cri-red text-white rounded-xl rounded-tr-none py-2 px-3 max-w-[85%] shadow-md"><div class="whitespace-pre-wrap text-sm">${txt}</div><div class="text-[10px] text-white text-opacity-70 text-right mt-1">${tS}</div></div>`}else{const hC=marked.parse(txt);let sH='';if(src&&src.length>0){const uS=new Set(src.map(s=>s?.metadata?.filename).filter(Boolean));if(uS.size>0){sH=`<div class="mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600/50"><div class="flex items-center justify-between cursor-pointer sources-toggle group"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-cri-red">Fonti (${uS.size})</span><button aria-label="Mostra fonti" class="text-xs text-gray-400 group-hover:text-cri-red p-0.5"><i class="fas fa-chevron-down toggle-icon transition-transform duration-200 text-[10px]"></i></button></div><div class="sources-content hidden mt-1 text-xs text-gray-500 dark:text-gray-400"><ul class="space-y-0.5 pl-1">${Array.from(uS).map(s=>`<li class="flex items-start gap-1.5"><i class="fas fa-file-alt text-cri-red/60 flex-shrink-0 mt-0.5"></i><span class="break-all text-[11px]">${s.replace('.md','').replace(/_/g,' ')}</span></li>`).join('')}</ul></div></div>`}}mC=`<div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-2 px-3 max-w-[85%] shadow-md border border-gray-100 dark:border-gray-700"><div class="prose prose-sm prose-chat dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">${hC}</div>${sH}<div class="text-[10px] text-gray-400 dark:text-gray-500 text-left mt-1">${tS}</div></div>`}d.innerHTML=mC;chatMessages.appendChild(d);const sT=d.querySelector('.sources-toggle');if(sT){sT.addEventListener('click',function(){const c=this.nextElementSibling,i=this.querySelector('.toggle-icon'),h=c.classList.toggle('hidden');i.classList.toggle('rotate-180',!h);setTimeout(()=>{const mB=d.offsetTop+d.offsetHeight;if(mB>chatMessages.scrollTop+chatMessages.clientHeight)chatMessages.scrollTo({top:chatMessages.scrollTop+50,behavior:'smooth'})},150)})}if(chatMessages.scrollHeight>chatMessages.clientHeight)scrollToBottom()}
+    function saveMessageToChat(txt,isU,src=null,ts=null){if(!currentChatId)return;const i=chats.findIndex(c=>c.id===currentChatId);if(i===-1)return;if(!chats[i].messages)chats[i].messages=[];const timestampToSave=ts||new Date().toISOString();chats[i].messages.push({text:txt,isUser:isU,sources:src,timestamp:timestampToSave});if(isU&&chats[i].title==='Nuova conversazione'&&chats[i].messages.filter(m=>m.isUser).length===1){const w=txt.split(' ');chats[i].title=w.slice(0,4).join(' ')+(w.length>4?'...':'');renderChatsList()}chats[i].lastUpdated=timestampToSave;saveChats()}
+    function showTypingIndicator(){if(document.getElementById('typing-indicator'))return;const d=document.createElement('div');d.id='typing-indicator';d.className='message-bubble animate-fade-in flex justify-start mb-3 clear-both';d.innerHTML='<div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-3 px-4 shadow-md border border-gray-100 dark:border-gray-700 flex items-center"><div class="flex space-x-1.5"><div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div> <div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div> <div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div></div></div>';chatMessages.appendChild(d);scrollToBottom()}
+    function removeTypingIndicator(){const i=document.getElementById('typing-indicator');if(i)i.remove()}
+
+    // --- SEND QUESTION - Updated Version v2 ---
+    async function sendQuestion(question) {
+        try {
+            if (!activeSessionId) {
+                console.error("Nessun activeSessionId per sendQuestion");
+                addMessage("Errore di sessione. Prova a iniziare una nuova chat.", false);
+                isLoading = false; removeTypingIndicator(); return;
+            }
+
+            // 1. Estrai la cronologia REALE dallo stato 'chats' (messaggi precedenti)
+            const currentChatObject = chats.find(c => c.id === currentChatId);
+            const baseConversationHistory = currentChatObject?.messages
+                ?.filter(msg => !(msg.isUser && msg.text === question)) // Evita duplicati della domanda corrente
+                .map(msg => ({
+                    type: msg.isUser ? "user" : "assistant",
+                    content: msg.text
+                })) || [];
+
+            // 2. *** MODIFICA CHIAVE v2 ***
+            //    Determina la storia da inviare all'API
+            let historyToSendToAPI = [];
+
+            if (baseConversationHistory.length === 0) {
+                // È LA PRIMA DOMANDA DELL'UTENTE IN QUESTA CHAT!
+                // Costruiamo l'array artificiale per MIMARE il vecchio frontend.
+                console.log(">>> PRIMA DOMANDA: Costruendo storia API artificiale <<<");
+                historyToSendToAPI = [
+                    { type: "assistant", content: INITIAL_ASSISTANT_WELCOME },
+                    { type: "user", content: question },
+                    { type: "assistant", content: ASSISTANT_TYPING_PLACEHOLDER } // Aggiungi il placeholder
+                ];
+            } else {
+                // È una domanda successiva. Usa la storia reale e aggiungi la domanda corrente.
+                console.log(">>> DOMANDA SUCCESSIVA: Usando storia reale + domanda corrente <<<");
+                historyToSendToAPI = [...baseConversationHistory];
+                historyToSendToAPI.push({ type: "user", content: question });
+                // Non aggiungiamo il placeholder per le domande successive,
+                // a meno che non sia strettamente necessario per replicare il vecchio comportamento.
+            }
+
+            // 3. Prepara i dati della richiesta
+            const requestData = {
+                query: question,
+                session_id: activeSessionId,
+                conversation_history: historyToSendToAPI, // <-- USA QUESTA!
+                include_prompt: true
+            };
+
+            console.log("Contesto INVIATO AL BACKEND:", JSON.stringify(requestData)); // Controlla questo log ORA!
+
+            // 4. Chiama l'API e gestisci la risposta
+            const response = await fetch(`${API_BASE_URL}/query`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            });
+
+            const data = await response.json();
+            console.log("Risposta DAL BACKEND:", data);
+
+            // ... log dettagliati RAG ...
+            if (data.source_documents && data.source_documents.length > 0) {
+                console.log(`%c📚 ${data.source_documents.length} chunks RAG:`, 'color: #e3000f; font-weight: bold;', data.source_documents.map(d => d?.metadata?.filename || 'N/D'));
+            }
+            if (data.condensed_question) {
+                 console.log(`%c🔍 Query riformulata: "${data.condensed_question}"`, 'color: #0066cc; font-weight: bold;');
+            }
+            if (data.full_prompt) {
+                console.log('%c📝 Prompt LLM (Inizio):', 'color: purple; font-weight: bold;', data.full_prompt.substring(0, 500) + "...");
+            }
+            // ... fine log RAG ...
+
+            await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
+            removeTypingIndicator();
+
+            if (response.ok) {
+                addMessage(data.answer, false, data.source_documents);
+            } else {
+                addMessage(`Errore (${response.status}): ${data.detail || data.error || response.statusText}. Riprova.`, false);
+                console.error("Errore API:", data);
+            }
+        } catch (error) {
+            console.error("Errore Fetch in sendQuestion:", error);
+            removeTypingIndicator();
+            const errorMsg = (error instanceof TypeError && error.message.includes('Failed to fetch')) ? "Errore di connessione. Verifica la rete." : "Errore imprevisto. Riprova più tardi.";
+            addMessage(errorMsg, false);
+        } finally {
+            isLoading = false;
+            sendMessageBtn.disabled = messageInput.value.trim() === '';
+            // Focus gestito da handleSubmit
+        }
+    }
+    // --- END OF SEND QUESTION ---
+
+
+    // --- UI Helpers ---
+    function scrollToBottom(smooth=false){const isScrolledUp=chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > 100; if(!isScrolledUp||smooth)chatMessages.scrollTo({top:chatMessages.scrollHeight,behavior:smooth?'smooth':'auto'}); toggleScrollButton();} // Changed instant to auto
+    function toggleScrollButton(){const showThreshold=150,isScrolledUp=chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > showThreshold;scrollBottomBtn.classList.toggle('opacity-0',!isScrolledUp);scrollBottomBtn.classList.toggle('pointer-events-none',!isScrolledUp)}
+    function switchTab(tabName){tabSwitcherBtns.forEach(b=>{const btnTabName=b.id.split('-')[1];b.classList.toggle('bg-white',btnTabName===tabName);b.classList.toggle('bg-opacity-20',btnTabName===tabName);b.classList.toggle('hover:bg-white/20',btnTabName!==tabName)});mobileTabs.forEach(b=>{const isActive=b.dataset.tab===tabName;b.classList.toggle('bg-red-50',isActive);b.classList.toggle('dark:bg-red-900/30',isActive);b.classList.toggle('text-cri-red',isActive);b.classList.toggle('text-gray-600',!isActive);b.classList.toggle('dark:text-gray-400',!isActive);b.classList.toggle('hover:bg-gray-100',!isActive);b.classList.toggle('dark:hover:bg-gray-700/50',!isActive);});[tabChat,tabVoice].forEach(t=>t?.classList.add('hidden'));const activeTab=document.getElementById(`tab-${tabName}`);if(activeTab){activeTab.classList.remove('hidden');if(tabName==='voice')AOS.refreshHard();ensureWidgetPlacement()} } // Ensured voice widget check
+    function openMobileSidebar(){if(!mobileSidebar||!mobileBackdrop||!mobileSidebarContent)return;mobileSidebar.classList.remove('hidden');document.body.style.overflow='hidden';requestAnimationFrame(()=>{mobileBackdrop.classList.remove('opacity-0');mobileSidebarContent.classList.remove('-translate-x-full')})}
+    function closeMobileSidebar(){if(!mobileSidebar||!mobileBackdrop||!mobileSidebarContent)return;mobileBackdrop.classList.add('opacity-0');mobileSidebarContent.classList.add('-translate-x-full');setTimeout(()=>{mobileSidebar.classList.add('hidden');document.body.style.overflow=''},300)}
+    function showModal(m){if(!m)return;m.classList.add('active');const f=m.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),c=m.querySelector('.close-modal-btn');if(f)f.focus();else if(c)c.focus()}
+    function closeAllModals(){document.querySelectorAll('.modal-container.active').forEach(m=>m.classList.remove('active'));chatToDelete=null}
+    function showNotification(txt,type='info'){notificationText.textContent=txt;notificationBanner.className=notificationBanner.className.replace(/bg-(cri-red|green-500|yellow-500)/g,'');let bgC='bg-cri-red';if(type==='success')bgC='bg-green-500';else if(type==='warning')bgC='bg-yellow-500';notificationBanner.classList.add(bgC);notificationBanner.classList.remove('-translate-y-full');setTimeout(hideNotification,4000)}
+    function hideNotification(){notificationBanner.classList.add('-translate-y-full')}
+
+    function ensureWidgetPlacement(){setTimeout(()=>{const w=document.querySelector('elevenlabs-convai'),c=document.querySelector('#tab-voice .widget-container'),p=document.getElementById('widget-placeholder');if(w&&c&&w.parentNode!==c){console.log("Moving ElevenLabs widget...");c.innerHTML='';c.appendChild(w);if(p)p.classList.add('hidden')}else if(!w&&c&&p)p.classList.remove('hidden')},300)}
+    function observeElevenLabsWidget(){const o=new MutationObserver(m=>{for(const mut of m)if(mut.type==='childList')mut.addedNodes.forEach(n=>{if(n.tagName==='ELEVENLABS-CONVAI'){console.log("ElevenLabs widget added to DOM, ensuring placement.");ensureWidgetPlacement()}})});o.observe(document.body,{childList:!0,subtree:!0});ensureWidgetPlacement()}
+
   </script>
 </body>
 </html>
