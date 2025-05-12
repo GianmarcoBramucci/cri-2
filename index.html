@@ -2,11 +2,11 @@
 <html lang="it" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Assistente Croce Rossa Italiana</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Font - Nuovi font più eleganti -->
+  <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -35,14 +35,23 @@
           },
           animation: {
             'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'typing': 'typing 1s infinite'
+            'typing': 'typing 1s infinite',
+            'float': 'floating 5s ease-in-out infinite'
           },
           keyframes: {
             typing: {
               '0%': { transform: 'translateY(0px)' },
               '28%': { transform: 'translateY(-5px)' },
               '44%': { transform: 'translateY(0px)' },
+            },
+            floating: {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' },
             }
+          },
+          screens: {
+            'xs': '480px', // Extra small screen breakpoint
           }
         },
       },
@@ -115,17 +124,6 @@
       opacity: 0.3;
     }
     
-    /* Effetto floating per elementi di UI */
-    @keyframes floating {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-      100% { transform: translateY(0px); }
-    }
-    
-    .animate-floating {
-      animation: floating 5s ease-in-out infinite;
-    }
-    
     /* Animazioni per comparsa messaggi */
     @keyframes slideInRight {
       from { opacity: 0; transform: translateX(30px); }
@@ -145,25 +143,127 @@
       animation: slideInLeft 0.3s ease forwards;
     }
     
-    /* Bordo dinamico pulsato per elementi attivi */
-    @keyframes borderPulse {
-      0% { border-color: rgba(227, 0, 15, 0.4); }
-      50% { border-color: rgba(227, 0, 15, 0.8); }
-      100% { border-color: rgba(227, 0, 15, 0.4); }
+    /* Evita bordi rosa e altri colori indesiderati a certi breakpoint */
+    @media (max-width: 668px) and (min-width: 658px) {
+      .no-pink-border {
+        border-color: transparent !important;
+      }
+      
+      .alt-bg {
+        background-color: #f8f8f8 !important;
+      }
+      
+      .dark .alt-bg {
+        background-color: #1e1e1e !important;
+      }
     }
     
-    .border-pulse {
-      animation: borderPulse 2s ease infinite;
+    /* Fix per lo scrolling dei suggerimenti in mobile */
+    .suggestion-scroll {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+    }
+    
+    .suggestion-scroll::-webkit-scrollbar {
+      display: none; /* Chrome e Safari */
+    }
+    
+    .suggestion-item {
+      scroll-snap-align: start;
+    }
+    
+    /* Safe area insets for modern devices */
+    @supports(padding: max(0px)) {
+      .safe-bottom {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      }
+      .safe-left {
+        padding-left: max(1rem, env(safe-area-inset-left));
+      }
+      .safe-right {
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+    }
+    
+    /* Fix per dispositivi Apple con il notch e Dynamic Island */
+    @supports (padding-top: constant(safe-area-inset-top)) {
+      .safe-top {
+        padding-top: constant(safe-area-inset-top);
+      }
+    }
+    @supports (padding-top: env(safe-area-inset-top)) {
+      .safe-top {
+        padding-top: env(safe-area-inset-top);
+      }
+    }
+    
+    /* Ottimizzazioni touch per dispositivi mobile */
+    @media (pointer: coarse) {
+      .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+      }
+    }
+    
+    /* Disable pull-to-refresh on mobile */
+    html, body {
+      overscroll-behavior-y: contain;
+      height: 100%;
+      width: 100%;
+      position: fixed;
+      overflow: hidden;
+    }
+    
+    /* Fix per telefoni pieghevoli e tablet con differenti orientamenti */
+    @media screen and (max-width: 320px) {
+      .xxs-text-xs {
+        font-size: 0.75rem;
+        line-height: 1rem;
+      }
+      
+      .xxs-p-1 {
+        padding: 0.25rem;
+      }
+    }
+    
+    /* Nascondere l'outline del focus solo se non si usa la tastiera */
+    .no-focus-outline:focus:not(:focus-visible) {
+      outline: none;
+    }
+    
+    /* Enhance focus for keyboard users */
+    :focus-visible {
+      outline: 2px solid #e3000f;
+      outline-offset: 2px;
+    }
+    
+    /* Fix per schermi ultra-wide */
+    @media screen and (min-width: 2000px) {
+      .ultra-wide-container {
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+    
+    /* Stili per dispositivi con dark mode preferito dal sistema */
+    @media (prefers-color-scheme: dark) {
+      .auto-dark {
+        background-color: #1a1a1a;
+        color: #f0f0f0;
+      }
     }
   </style>
 </head>
-<body class="bg-gray-50 cross-pattern h-screen overflow-hidden font-sans dark:text-gray-200">
+<body class="bg-gray-50 cross-pattern h-screen w-screen overflow-hidden font-sans dark:text-gray-200">
   <!-- Overlay per effetto glass quando si apre il menu mobile -->
   <div id="mobileMenuOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm hidden md:hidden"></div>
   
-  <div class="flex h-screen">
+  <div class="flex h-screen w-screen">
     <!-- Sidebar (desktop) -->
-    <aside class="hidden md:flex w-72 bg-white dark:bg-gray-900 shadow-lg z-10 flex-col border-r border-gray-100 dark:border-gray-800 transition-all duration-300">
+    <aside class="hidden md:flex w-64 lg:w-72 bg-white dark:bg-gray-900 shadow-lg z-10 flex-col border-r border-gray-100 dark:border-gray-800 transition-all duration-300">
       <div class="p-4 flex items-center border-b border-gray-100 dark:border-gray-800">
         <div class="w-9 h-9 flex items-center justify-center bg-cri-red rounded-xl mr-3 shadow-md">
           <i class="fas fa-plus text-white text-sm"></i>
@@ -177,7 +277,7 @@
       <div class="flex-grow flex flex-col overflow-hidden">
         <div class="px-4 py-4 flex items-center justify-between">
           <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Le tue conversazioni</div>
-          <button id="newChatBtn" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+          <button id="newChatBtn" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors touch-target">
             <i class="fas fa-plus"></i>
           </button>
         </div>
@@ -193,14 +293,14 @@
           <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Aiuto</div>
           
           <div class="space-y-1">
-            <div id="guidaBtn" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group">
+            <div id="guidaBtn" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
               <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
                 <i class="fas fa-question-circle text-gray-500 dark:text-gray-400"></i>
               </div>
               <span>Guida</span>
             </div>
             
-            <a href="https://cri.it/" target="_blank" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group">
+            <a href="https://cri.it/" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
               <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
                 <i class="fas fa-external-link-alt text-gray-500 dark:text-gray-400"></i>
               </div>
@@ -212,12 +312,12 @@
     </aside>
     
     <!-- Mobile menu button (visible only on mobile) -->
-    <button id="mobileMenuButton" class="md:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 w-10 h-10 rounded-xl shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+    <button id="mobileMenuButton" aria-label="Menu" class="md:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 w-10 h-10 rounded-xl shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 touch-target">
       <i class="fas fa-bars"></i>
     </button>
     
     <!-- Mobile sidebar (hidden by default) -->
-    <aside id="mobileSidebar" class="fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 shadow-lg z-50 transform -translate-x-full transition-transform duration-300 md:hidden">
+    <aside id="mobileSidebar" class="fixed inset-y-0 left-0 w-[85%] max-w-xs bg-white dark:bg-gray-900 shadow-lg z-50 transform -translate-x-full transition-transform duration-300 md:hidden safe-left">
       <!-- Mobile sidebar content: same as desktop sidebar -->
       <div class="p-4 flex items-center border-b border-gray-100 dark:border-gray-800">
         <div class="w-9 h-9 flex items-center justify-center bg-cri-red rounded-xl mr-3 shadow-md">
@@ -227,15 +327,15 @@
           <span class="font-bold text-gray-800 dark:text-white block text-sm">CRI Assistente</span>
           <span class="text-xs text-gray-500 dark:text-gray-400">Croce Rossa Italiana</span>
         </div>
-        <button id="closeMobileMenu" class="ml-auto text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+        <button id="closeMobileMenu" aria-label="Chiudi menu" class="ml-auto text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 touch-target">
           <i class="fas fa-times"></i>
         </button>
       </div>
       
-      <div class="flex-grow flex flex-col overflow-hidden">
+      <div class="flex-grow flex flex-col overflow-hidden h-[calc(100%-4rem)]">
         <div class="px-4 py-4 flex items-center justify-between">
           <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Le tue conversazioni</div>
-          <button id="newChatBtnMobile" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+          <button id="newChatBtnMobile" aria-label="Nuova chat" class="text-cri-red hover:text-cri-darkred p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors touch-target">
             <i class="fas fa-plus"></i>
           </button>
         </div>
@@ -247,18 +347,18 @@
         
         <div class="border-t border-gray-100 dark:border-gray-800 my-2"></div>
         
-        <div class="px-4 py-2">
+        <div class="px-4 py-2 pb-8 safe-bottom">
           <div class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Aiuto</div>
           
           <div class="space-y-1">
-            <div id="guidaBtnMobile" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group">
+            <div id="guidaBtnMobile" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
               <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
                 <i class="fas fa-question-circle text-gray-500 dark:text-gray-400"></i>
               </div>
               <span>Guida</span>
             </div>
             
-            <a href="https://cri.it/" target="_blank" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group">
+            <a href="https://cri.it/" target="_blank" rel="noopener noreferrer" class="flex items-center px-3 py-2.5 text-gray-600 dark:text-gray-300 rounded-xl font-medium cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-800 group touch-target">
               <div class="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg shadow-sm mr-3 group-hover:shadow">
                 <i class="fas fa-external-link-alt text-gray-500 dark:text-gray-400"></i>
               </div>
@@ -270,26 +370,26 @@
     </aside>
     
     <!-- Main content area -->
-    <main class="flex-grow flex flex-col relative">
+    <main class="flex-grow flex flex-col relative w-full">
       <!-- Header con background 3D -->
-      <div class="bg-gradient-to-r from-cri-red to-cri-darkred relative h-40 md:h-32 flex items-center justify-center bg-gradient-3d">
+      <div class="bg-gradient-to-r from-cri-red to-cri-darkred relative h-32 sm:h-28 flex items-center justify-center bg-gradient-3d safe-top">
         <!-- Pattern background -->
         <div class="absolute inset-0 bg-black bg-opacity-5 dark:bg-opacity-20"></div>
         
         <!-- Header content -->
-        <div class="relative z-10 px-6 md:px-12 w-full">
-          <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between">
-            <h1 class="text-white text-2xl md:text-3xl font-bold font-display tracking-wide">
+        <div class="relative z-10 px-4 sm:px-6 md:px-12 w-full">
+          <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between">
+            <h1 class="text-white text-xl xs:text-2xl md:text-3xl font-bold font-display tracking-wide mt-6 sm:mt-0">
               <span class="inline-block transform hover:scale-105 transition-transform cursor-default">
                 Assistente Croce Rossa
               </span>
-              <i class="fas fa-plus ml-2 text-white text-xl bg-white bg-opacity-20 p-1.5 rounded-full"></i>
+              <i class="fas fa-plus ml-2 text-white text-lg xs:text-xl bg-white bg-opacity-20 p-1.5 rounded-full"></i>
             </h1>
             
             <!-- Theme switcher -->
-            <div class="mt-2 md:mt-0 flex bg-white bg-opacity-20 rounded-full p-1">
-              <button id="lightModeBtn" class="text-white text-xs font-medium px-3 py-1 rounded-full bg-white bg-opacity-30">Chiaro</button>
-              <button id="darkModeBtn" class="text-white text-xs font-medium px-3 py-1 rounded-full">Scuro</button>
+            <div class="mt-2 sm:mt-0 flex bg-white bg-opacity-20 rounded-full p-1">
+              <button id="lightModeBtn" aria-label="Tema chiaro" class="text-white text-xs font-medium px-3 py-1 rounded-full bg-white bg-opacity-30 touch-target">Chiaro</button>
+              <button id="darkModeBtn" aria-label="Tema scuro" class="text-white text-xs font-medium px-3 py-1 rounded-full touch-target">Scuro</button>
             </div>
           </div>
         </div>
@@ -302,24 +402,25 @@
         </div>
       </div>
       
-      <!-- Suggerimenti rapidi -->
-      <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900">
+      <!-- Suggerimenti rapidi - FIXATI PER MOBILE -->
+      <div class="px-2 sm:px-4 py-3 bg-gray-50 dark:bg-gray-900">
         <div class="max-w-4xl mx-auto">
-          <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Domande frequenti:</div>
-          <div class="flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
-            <button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30">
+          <div class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Domande frequenti:</div>
+          <!-- Contenitore migliorato per lo scrolling mobile -->
+          <div class="suggestion-scroll flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar no-pink-border alt-bg">
+            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
               Come diventare volontario?
             </button>
-            <button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30">
+            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
               Corsi di primo soccorso
             </button>
-            <button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30">
+            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
               Donare sangue
             </button>
-            <button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30">
+            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
               Emergenze attive
             </button>
-            <button class="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30">
+            <button class="suggestion-item whitespace-nowrap px-2 py-1.5 xs:px-3 xs:py-2 bg-white dark:bg-gray-800 text-xs sm:text-sm text-gray-700 dark:text-gray-300 rounded-full shadow-sm hover:shadow border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-cri-red focus:ring-opacity-30 touch-target no-pink-border">
               Come donare
             </button>
           </div>
@@ -328,16 +429,16 @@
       
       <!-- Chat area -->
       <div class="relative flex-grow overflow-hidden">
-        <div id="chatContainer" class="absolute inset-0 overflow-y-auto p-4 md:p-6 custom-scrollbar">
-          <div class="max-w-4xl mx-auto space-y-6 pb-20">
+        <div id="chatContainer" class="absolute inset-0 overflow-y-auto p-2 xs:p-4 md:p-6 custom-scrollbar">
+          <div class="max-w-4xl mx-auto space-y-4 xs:space-y-6 pb-20 ultra-wide-container">
             <!-- Messaggio di benvenuto dell'assistente con illustrazione -->
-            <div class="flex flex-col md:flex-row gap-4 items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left">
-              <div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+            <div class="flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
                 <i class="fas fa-robot text-cri-red text-3xl"></i>
               </div>
-              <div class="flex-grow">
-                <h2 class="text-lg md:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-                <p class="text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
+              <div class="flex-grow text-center sm:text-left">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
+                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
               </div>
             </div>
             
@@ -347,30 +448,32 @@
       </div>
       
       <!-- Input area con effetto floating -->
-      <div class="relative z-10">
-        <div class="absolute -top-7 left-0 right-0 overflow-hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-7 text-white dark:text-gray-800 fill-current">
+      <div class="relative z-10 no-pink-border">
+        <div class="absolute -top-5 sm:-top-7 left-0 right-0 overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" class="w-full h-5 sm:h-7 text-white dark:text-gray-800 fill-current">
             <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" class="shape-fill"></path>
           </svg>
         </div>
         
-        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 md:p-6">
-          <div class="max-w-4xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 xs:p-4 md:p-6 safe-bottom no-pink-border">
+          <div class="max-w-4xl mx-auto ultra-wide-container">
             <!-- Contenitore per pulsanti di azione e input -->
             <form id="queryForm" class="relative">
               <div class="relative flex-grow">
                 <div class="relative flex items-end">
-                  <div class="relative flex-grow border-2 border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-700 shadow-sm transition-all focus-within:border-cri-red focus-within:shadow-lg">
+                  <div class="relative flex-grow border-2 border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-700 shadow-sm transition-all focus-within:border-cri-red focus-within:shadow-lg no-pink-border">
                     <textarea 
                       id="queryInput" 
-                      class="w-full bg-transparent border-none rounded-2xl py-3 px-4 pr-12 resize-none focus:ring-0 focus:outline-none custom-scrollbar max-h-32 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                      class="w-full bg-transparent border-none rounded-2xl py-3 px-4 pr-12 resize-none focus:ring-0 focus:outline-none custom-scrollbar max-h-32 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
                       placeholder="Scrivi qui la tua domanda..."
                       rows="1"
+                      aria-label="Domanda"
                     ></textarea>
                     <button 
                       type="button" 
                       id="sendBtn" 
-                      class="absolute right-2 bottom-2 text-cri-red disabled:text-gray-300 dark:disabled:text-gray-600 rounded-full p-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:hover:bg-transparent"
+                      aria-label="Invia messaggio"
+                      class="absolute right-2 bottom-2 text-cri-red disabled:text-gray-300 dark:disabled:text-gray-600 rounded-full p-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:hover:bg-transparent touch-target"
                       disabled
                     >
                       <i class="fas fa-paper-plane"></i>
@@ -378,15 +481,15 @@
                   </div>
                 </div>
                 
-                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1">
-                  <div>
+                <div class="flex flex-wrap justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-1 gap-y-1">
+                  <div class="xxs-text-xs flex flex-wrap gap-x-2 items-center">
                     <span class="inline-flex items-center gap-1">
-                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs">Enter</span> 
+                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Enter</span> 
                       <span>per inviare</span>
                     </span>
-                    <span class="mx-2">·</span>
+                    <span class="mx-2 hidden xs:inline">·</span>
                     <span class="inline-flex items-center gap-1">
-                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs">Shift</span>+<span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs">Enter</span> 
+                      <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Shift</span>+<span class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs xxs-text-xs xxs-p-1 no-pink-border">Enter</span> 
                       <span>per andare a capo</span>
                     </span>
                   </div>
@@ -405,23 +508,23 @@
   <!-- Modal per confermare l'eliminazione della chat -->
   <div id="deleteChatModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="deleteChatModalContent">
-      <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+      <div class="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-between items-center no-pink-border">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
           <i class="fas fa-trash-alt mr-2 text-cri-red"></i>
           Elimina chat
         </h3>
-        <button id="closeDeleteChatBtn" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button id="closeDeleteChatBtn" aria-label="Chiudi" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 touch-target">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="px-6 py-6">
+      <div class="px-4 sm:px-6 py-6">
         <p class="text-gray-600 dark:text-gray-300">Sei sicuro di voler eliminare questa chat? Questa azione non può essere annullata.</p>
       </div>
-      <div class="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end items-center space-x-3">
-        <button id="cancelDeleteChatBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <div class="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-end items-center space-x-3 no-pink-border">
+        <button id="cancelDeleteChatBtn" class="px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors touch-target no-pink-border">
           Annulla
         </button>
-        <button id="confirmDeleteChatBtn" class="px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors">
+        <button id="confirmDeleteChatBtn" class="px-3 sm:px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors touch-target">
           Elimina
         </button>
       </div>
@@ -431,16 +534,16 @@
   <!-- Modal per la guida -->
   <div id="guidaModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="guidaModalContent">
-      <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+      <div class="border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-between items-center no-pink-border">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
           <i class="fas fa-question-circle mr-2 text-cri-red"></i>
           Guida all'utilizzo
         </h3>
-        <button id="closeGuidaBtn" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <button id="closeGuidaBtn" aria-label="Chiudi" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 touch-target">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="px-6 py-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
+      <div class="px-4 sm:px-6 py-6 overflow-y-auto max-h-[50vh] sm:max-h-[70vh] custom-scrollbar">
         <div class="space-y-6">
           <div>
             <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2 font-display">Benvenuto all'Assistente Virtuale CRI</h4>
@@ -487,14 +590,14 @@
             <p class="text-gray-600 dark:text-gray-300 mb-2">Per aiutarti a iniziare, abbiamo creato alcuni suggerimenti rapidi che puoi trovare nella parte superiore dell'applicazione. Clicca su uno di essi per fare una domanda predefinita.</p>
           </div>
           
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 no-pink-border">
             <h5 class="font-medium text-gray-800 dark:text-white mb-1">Informazioni sull'assistente</h5>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Questo assistente virtuale è progettato per fornire informazioni sulla Croce Rossa Italiana. Le risposte sono basate su documenti ufficiali della CRI. Per maggiori informazioni, visita il <a href="https://cri.it" target="_blank" class="text-cri-red hover:underline">sito ufficiale della Croce Rossa Italiana</a>.</p>
+            <p class="text-gray-600 dark:text-gray-300 mb-2">Questo assistente virtuale è progettato per fornire informazioni sulla Croce Rossa Italiana. Le risposte sono basate su documenti ufficiali della CRI. Per maggiori informazioni, visita il <a href="https://cri.it" target="_blank" rel="noopener noreferrer" class="text-cri-red hover:underline">sito ufficiale della Croce Rossa Italiana</a>.</p>
           </div>
         </div>
       </div>
-      <div class="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end items-center">
-        <button id="closeGuidaBtn2" class="px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors">
+      <div class="border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4 flex justify-end items-center no-pink-border">
+        <button id="closeGuidaBtn2" class="px-4 py-2 bg-cri-red text-white rounded-lg text-sm hover:bg-cri-darkred transition-colors touch-target">
           Ho capito
         </button>
       </div>
@@ -561,7 +664,65 @@
       loadTheme();
       
       // Imposta il focus sull'input
-      queryInput.focus();
+      setTimeout(() => {
+        queryInput.focus();
+      }, 500);
+      
+      // EventListener per orientamento dispositivo mobile
+      window.addEventListener('resize', checkOverflow);
+      checkOverflow();
+      
+      // Abilitare lo snap scrolling sui suggerimenti rapidi per dispositivi touch
+      enableSnapScrolling();
+    }
+    
+    // Abilita lo snap scrolling per l'area dei suggerimenti rapidi
+    function enableSnapScrolling() {
+      const suggestionContainer = document.querySelector('.suggestion-scroll');
+      if (suggestionContainer) {
+        // Aggiungi un leggero padding iniziale per migliorare l'aspetto
+        suggestionContainer.style.paddingLeft = '8px';
+        
+        // Gestisci lo scorrimento orizzontale su touch
+        suggestionContainer.addEventListener('touchstart', function(e) {
+          this.dataset.startX = e.touches[0].pageX;
+          this.dataset.scrollLeft = this.scrollLeft;
+        });
+        
+        suggestionContainer.addEventListener('touchmove', function(e) {
+          if (this.dataset.startX) {
+            const touchDiff = e.touches[0].pageX - this.dataset.startX;
+            this.scrollLeft = parseInt(this.dataset.scrollLeft) - touchDiff;
+            e.preventDefault(); // Previeni lo scroll verticale durante lo scorrimento orizzontale
+          }
+        });
+        
+        suggestionContainer.addEventListener('touchend', function() {
+          delete this.dataset.startX;
+        });
+      }
+    }
+    
+    // Controlla e corregge overflow su dispositivi mobili
+    function checkOverflow() {
+      // Controlla se il browser supporta innerHeight
+      if (window.innerHeight) {
+        document.body.style.height = `${window.innerHeight}px`;
+      }
+      
+      // Controlla overflow su dispositivi molto piccoli
+      if (window.innerWidth <= 320) {
+        document.querySelectorAll('.xxs-text-xs').forEach(el => {
+          el.style.fontSize = '0.7rem';
+        });
+      }
+      
+      // Fix per il problema dei bordi rosa a 663px
+      if (window.innerWidth >= 658 && window.innerWidth <= 668) {
+        document.querySelectorAll('.no-pink-border').forEach(el => {
+          el.style.borderColor = 'transparent';
+        });
+      }
     }
     
     // Funzione per caricare il tema salvato
@@ -593,14 +754,32 @@
     function loadSavedChats() {
       const savedChats = localStorage.getItem('cri_chats');
       if (savedChats) {
-        chats = JSON.parse(savedChats);
+        try {
+          chats = JSON.parse(savedChats);
+        } catch (e) {
+          console.error('Errore nel parsing delle chat salvate:', e);
+          chats = [];
+        }
       }
       renderChatsList();
     }
     
     // Funzione per salvare le chat
     function saveChats() {
-      localStorage.setItem('cri_chats', JSON.stringify(chats));
+      try {
+        localStorage.setItem('cri_chats', JSON.stringify(chats));
+      } catch (e) {
+        console.error('Errore nel salvataggio delle chat:', e);
+        // Se localStorage è pieno, rimuovi le chat più vecchie
+        if (e instanceof DOMException && (e.name === 'QuotaExceededError' || 
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+          // Mantieni solo le 5 chat più recenti
+          if (chats.length > 5) {
+            chats = chats.slice(0, 5);
+            localStorage.setItem('cri_chats', JSON.stringify(chats));
+          }
+        }
+      }
     }
     
     // Funzione per creare una nuova chat
@@ -705,7 +884,7 @@
     // Funzione per creare un elemento della lista chat
     function createChatListItem(chat) {
       const chatItem = document.createElement('div');
-      chatItem.className = `group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1 ${chat.isActive ? 'bg-red-50 dark:bg-red-900/20 text-cri-red font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`;
+      chatItem.className = `group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all mb-1 no-pink-border ${chat.isActive ? 'bg-red-50 dark:bg-red-900/20 text-cri-red font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`;
       chatItem.dataset.chatId = chat.id;
       
       chatItem.innerHTML = `
@@ -715,7 +894,7 @@
         <div class="flex-grow truncate">
           ${chat.title}
         </div>
-        <button class="delete-chat-btn text-gray-400 hover:text-cri-red p-1 transition-all">
+        <button class="delete-chat-btn text-gray-400 hover:text-cri-red p-1 transition-all touch-target" aria-label="Elimina chat">
           <i class="fas fa-trash-alt"></i>
         </button>
       `;
@@ -748,14 +927,14 @@
       
       // Aggiungi il messaggio di benvenuto
       const welcomeMessage = document.createElement('div');
-      welcomeMessage.className = 'flex flex-col md:flex-row gap-4 items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left';
+      welcomeMessage.className = 'flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border';
       welcomeMessage.innerHTML = `
-        <div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
           <i class="fas fa-robot text-cri-red text-3xl"></i>
         </div>
-        <div class="flex-grow">
-          <h2 class="text-lg md:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-          <p class="text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
+        <div class="flex-grow text-center sm:text-left">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
+          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
         </div>
       `;
       chatContainer.appendChild(welcomeMessage);
@@ -766,20 +945,25 @@
           addMessage(msg.text, msg.isUser, msg.sources);
         });
       }
+      
+      // Scorri in fondo
+      setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 100);
     }
     
     // Funzione per resettare l'interfaccia della chat
     function resetChatInterface() {
       chatContainer.innerHTML = '';
       const welcomeMessage = document.createElement('div');
-      welcomeMessage.className = 'flex flex-col md:flex-row gap-4 items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left';
+      welcomeMessage.className = 'flex flex-col sm:flex-row gap-4 items-center p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 slide-in-left no-pink-border';
       welcomeMessage.innerHTML = `
-        <div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center">
           <i class="fas fa-robot text-cri-red text-3xl"></i>
         </div>
-        <div class="flex-grow">
-          <h2 class="text-lg md:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
-          <p class="text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
+        <div class="flex-grow text-center sm:text-left">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-2 font-display">Benvenuto all'Assistente CRI</h2>
+          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300">Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?</p>
         </div>
       `;
       chatContainer.appendChild(welcomeMessage);
@@ -798,8 +982,8 @@
       if (isUser) {
         messageDiv.className = 'flex justify-end slide-in-right';
         messageDiv.innerHTML = `
-          <div class="bg-cri-red bg-opacity-5 dark:bg-red-900/10 border border-cri-red border-opacity-10 dark:border-opacity-20 p-4 rounded-2xl rounded-tr-none max-w-md md:max-w-2xl shadow-sm">
-            <div class="text-gray-800 dark:text-gray-200">${text}</div>
+          <div class="bg-cri-red bg-opacity-5 dark:bg-red-900/10 border border-cri-red border-opacity-10 dark:border-opacity-20 p-3 sm:p-4 rounded-2xl rounded-tr-none max-w-[85%] sm:max-w-md md:max-w-2xl shadow-sm no-pink-border">
+            <div class="text-gray-800 dark:text-gray-200 text-sm sm:text-base break-words">${text}</div>
           </div>
         `;
       } else {
@@ -819,10 +1003,10 @@
           });
           
           sourcesHTML = `
-            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 no-pink-border">
               <div class="flex justify-between items-center cursor-pointer sources-toggle">
                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">Fonti: ${uniqueSources.size}</p>
-                <button class="text-xs text-cri-red hover:text-cri-darkred p-1">
+                <button class="text-xs text-cri-red hover:text-cri-darkred p-1 touch-target" aria-label="Mostra fonti">
                   <i class="fas fa-chevron-down toggle-icon"></i>
                 </button>
               </div>
@@ -841,8 +1025,8 @@
         }
         
         messageDiv.innerHTML = `
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl rounded-tl-none max-w-md md:max-w-2xl shadow-md border border-gray-100 dark:border-gray-700">
-            <div class="prose prose-sm dark:prose-invert max-w-none dark:text-gray-300">${htmlContent}</div>
+          <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl rounded-tl-none max-w-[85%] sm:max-w-md md:max-w-2xl shadow-md border border-gray-100 dark:border-gray-700 no-pink-border">
+            <div class="prose prose-sm dark:prose-invert max-w-none dark:text-gray-300 text-sm sm:text-base break-words">${htmlContent}</div>
             ${sourcesHTML}
           </div>
         `;
@@ -909,7 +1093,7 @@
       typingDiv.id = 'typingIndicator';
       typingDiv.className = 'flex justify-start slide-in-left';
       typingDiv.innerHTML = `
-        <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none shadow-md border border-gray-100 dark:border-gray-700 flex items-center">
+        <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-tl-none shadow-md border border-gray-100 dark:border-gray-700 flex items-center no-pink-border">
           <div class="flex space-x-1 px-2">
             <div class="w-2 h-2 bg-cri-red rounded-full animate-typing typing-dot"></div>
             <div class="w-2 h-2 bg-cri-red rounded-full animate-typing typing-dot"></div>
@@ -1095,6 +1279,11 @@
           }
           
           isLoading = false;
+          
+          // Rimetti focus sull'input dopo la risposta
+          setTimeout(() => {
+            queryInput.focus();
+          }, 300);
         }, 700);
         
       } catch (error) {
@@ -1104,6 +1293,11 @@
           addMessage("Mi dispiace, si è verificato un errore di connessione. Verifica la tua connessione e riprova.");
           console.error("Errore di rete:", error);
           isLoading = false;
+          
+          // Rimetti focus sull'input dopo l'errore
+          setTimeout(() => {
+            queryInput.focus();
+          }, 300);
         }, 500);
       }
     }
@@ -1174,11 +1368,13 @@
     mobileMenuButton.addEventListener('click', function() {
       mobileSidebar.classList.remove('-translate-x-full');
       mobileMenuOverlay.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
     });
     
     function closeMobileSidebar() {
       mobileSidebar.classList.add('-translate-x-full');
       mobileMenuOverlay.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
     }
     
     closeMobileMenu.addEventListener('click', closeMobileSidebar);
@@ -1198,7 +1394,7 @@
     });
     
     // Gestione dei suggerimenti rapidi (click sui bottoni delle domande frequenti)
-    document.querySelectorAll('.overflow-x-auto button').forEach(button => {
+    document.querySelectorAll('.suggestion-scroll button').forEach(button => {
       button.addEventListener('click', function() {
         if (isLoading) return;
         
@@ -1280,10 +1476,44 @@
       }
     });
     
+    // Fix per dispositivi iOS
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault(); // Blocca lo zoom con gesture
+    });
+    
+    // Gestisci back button su mobile
+    window.addEventListener('popstate', function() {
+      if (!mobileSidebar.classList.contains('-translate-x-full')) {
+        closeMobileSidebar();
+        history.pushState(null, document.title, window.location.href);
+      }
+    });
+    
     // Inizializzazione
     initApp();
     adjustTextareaHeight();
-    queryInput.focus();
+    
+    // Gestione per l'evidenziazione problema bordi rosa a 663px
+    function checkPinkBorderIssue() {
+      const width = window.innerWidth;
+      if (width >= 658 && width <= 668) {
+        document.querySelectorAll('.no-pink-border').forEach(el => {
+          el.style.borderColor = 'transparent';
+        });
+      } else {
+        document.querySelectorAll('.no-pink-border').forEach(el => {
+          el.style.borderColor = '';  // Reset to CSS value
+        });
+      }
+    }
+    
+    // Check for pink border issue on initial load
+    checkPinkBorderIssue();
+    
+    // Check for pink border issue on resize
+    window.addEventListener('resize', function() {
+      checkPinkBorderIssue();
+    });
   </script>
 </body>
 </html>
