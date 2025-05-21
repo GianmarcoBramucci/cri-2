@@ -195,7 +195,8 @@ class RAGEngine:
             model=settings.LLM_MODEL,
             api_key=settings.OPENAI_API_KEY,
             temperature=0.1,
-            system_prompt=SYSTEM_PROMPT
+            system_prompt=SYSTEM_PROMPT,
+            max_tokens=32768
         )
         LlamaIndexSettings.embed_model = OpenAIEmbedding(
             model_name=settings.EMBEDDING_MODEL,
