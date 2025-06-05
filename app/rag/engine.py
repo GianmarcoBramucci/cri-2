@@ -194,7 +194,7 @@ class RAGEngine:
         LlamaIndexSettings.llm = OpenAI(
             model=settings.LLM_MODEL,
             api_key=settings.OPENAI_API_KEY,
-            temperature=0.1,
+            temperature=0.5,
             system_prompt=SYSTEM_PROMPT,
             max_tokens=32768
         )
