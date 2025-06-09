@@ -228,12 +228,8 @@
   <script>
     // --- Constants ---
     const API_BASE_URL = '/api';
-    // Testo ESATTO (o quasi) del messaggio di benvenuto iniziale. PRENDILO DAL TUO HTML INIZIALE.
-    // IMPORTANTE: Rimuovi eventuali spazi extra o newline all'inizio/fine se non presenti nel vecchio payload.
-    //             Questo dovrebbe corrispondere a quanto trovato nel JSON del vecchio frontend.
-    //             NOTA: Ho rimosso il newline tra le due frasi basandomi sul JSON del vecchio frontend.
     const INITIAL_ASSISTANT_WELCOME = "Sono qui per rispondere alle tue domande sulla Croce Rossa Italiana, fornire informazioni sui servizi e guidarti nelle attività di volontariato. Come posso aiutarti oggi?";
-    const ASSISTANT_TYPING_PLACEHOLDER = "Assistente sta scrivendo..."; // Questo deve corrispondere a quello che il vecchio FE inviava
+    const ASSISTANT_TYPING_PLACEHOLDER = "Assistente sta scrivendo...";
 
     // --- DOM Elements ---
     const messageInput = document.getElementById('message-input');
@@ -264,7 +260,6 @@
     const mobileTabs = document.querySelectorAll('.mobile-tab-btn');
     const tabChat = document.getElementById('tab-chat');
     const tabVoice = document.getElementById('tab-voice');
-    // Analysis tab elements removed
     const notificationBanner = document.getElementById('notification-banner');
     const notificationText = document.getElementById('notification-text');
     const closeNotification = document.getElementById('close-notification');
@@ -279,6 +274,16 @@
     let darkMode = localStorage.getItem('cri_theme') === 'dark';
     let scrollTimeout = null;
 
+    // --- MODIFICA: Variabili per l'indicatore di attesa ---
+    let waitingTextInterval = null;
+    const waitingPhrases = [
+        "Sto cercando la risposta migliore per te...",
+        "Consulto i documenti della Croce Rossa...",
+        "Un momento di pazienza, grazie...",
+        "Elaboro la tua richiesta...",
+        "Sto preparando le informazioni..."
+    ];
+
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', function() {
         AOS.init({ once: true, duration: 400, offset: 30, disable: 'mobile', easing: 'ease-out-cubic' });
@@ -291,17 +296,14 @@
         loadTheme();
         loadSavedChats();
         if (chats.length === 0) {
-            createNewChat(); // Questo chiamerà activateChat che caricherà i msg (vuoti)
+            createNewChat();
         } else {
-            // Ordina per data e attiva la più recente
             chats.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
-            // Trova l'ultima attiva o la prima se nessuna è attiva
             const lastActive = chats.find(c => c.isActive) || chats[0];
             activateChat(lastActive.id);
         }
         adjustTextareaHeight();
-        switchTab('chat'); // Assicurati che la tab chat sia visibile all'inizio
-        // updateWelcomeMessageTime() viene chiamato da loadChatMessages
+        switchTab('chat');
         setTimeout(() => { messageInput.focus(); }, 300);
     }
 
@@ -334,12 +336,12 @@
 
     // --- Event Handlers (Brief) ---
     function handleInput() { adjustTextareaHeight(); sendMessageBtn.disabled = messageInput.value.trim() === ''; }
-    function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (messageInput.value.trim() && !isLoading) chatForm.requestSubmit(); } } // Usa requestSubmit
+    function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (messageInput.value.trim() && !isLoading) chatForm.requestSubmit(); } }
     function handleSubmit(e) { e.preventDefault(); const msg = messageInput.value.trim(); if (!msg || isLoading) return; addMessage(msg, true); messageInput.value = ''; adjustTextareaHeight(); sendMessageBtn.disabled = true; messageInput.focus(); isLoading = true; showTypingIndicator(); sendQuestion(msg); }
     function handleScroll() { clearTimeout(scrollTimeout); scrollTimeout = setTimeout(toggleScrollButton, 150); }
     function toggleTheme() { darkMode = !darkMode; setTheme(darkMode ? 'dark' : 'light'); }
     function handleDeleteConfirm() { if (chatToDelete) { deleteChat(chatToDelete); closeAllModals(); } }
-    function handleSuggestionClick() { if (isLoading) return; const q = this.textContent.trim(); messageInput.value = q; adjustTextareaHeight(); sendMessageBtn.disabled = false; messageInput.focus(); setTimeout(() => chatForm.requestSubmit(), 50); } // Usa requestSubmit
+    function handleSuggestionClick() { if (isLoading) return; const q = this.textContent.trim(); messageInput.value = q; adjustTextareaHeight(); sendMessageBtn.disabled = false; messageInput.focus(); setTimeout(() => chatForm.requestSubmit(), 50); }
 
     // --- Core Chat & State Logic ---
     function loadTheme() { const saved = localStorage.getItem('cri_theme') || 'light'; darkMode = (saved === 'dark'); setTheme(saved); }
@@ -365,7 +367,6 @@
                     <div class="text-xs text-gray-500 dark:text-gray-400">${f}</div>
                 </div>
             </div>
-            
             <button aria-label="Elimina ${c.title}" class="delete-chat-btn ml-1 p-1.5 rounded-full text-gray-400 hover:text-cri-red hover:bg-red-100 dark:hover:bg-red-900/30 transition-all focus:opacity-100 flex-shrink-0">
                 <i class="fas fa-trash-alt text-xs"></i>
             </button>
@@ -375,32 +376,22 @@
         b.addEventListener('click',e=>{e.stopPropagation();chatToDelete=c.id;showModal(deleteChatModal)});
         return i
     }
-    function resetChatInterface() { chatMessages.innerHTML = ''; } // Svuota completamente
+    function resetChatInterface() { chatMessages.innerHTML = ''; }
     function loadChatMessages(id) {
-        resetChatInterface(); // Svuota prima di caricare
+        resetChatInterface();
         const chat = chats.find(c => c.id === id);
         if (!chat) return;
-
-        // Aggiungi il messaggio di benvenuto standard se la chat è vuota o inizia con utente
-        // Lo aggiungiamo solo visivamente, non verrà salvato di nuovo a meno che non fosse già il primo messaggio.
         let welcomeAdded = false;
         if (!chat.messages || chat.messages.length === 0 || chat.messages[0].isUser) {
              addWelcomeMessageToUI(chat.createdAt || chat.lastUpdated);
              welcomeAdded = true;
         }
-
-        // Aggiungi i messaggi salvati
         if (chat.messages && chat.messages.length > 0) {
             chat.messages.forEach(msg => {
-                 // Se il primissimo messaggio salvato è l'assistente di benvenuto, NON aggiungerlo di nuovo
-                 // perché l'abbiamo già aggiunto visivamente con addWelcomeMessageToUI.
-                 // Altrimenti, aggiungi il messaggio.
                  const isFirstSavedWelcome = chat.messages.indexOf(msg) === 0 && !msg.isUser && msg.text.includes("Benvenuto all'Assistente CRI");
                  if (!isFirstSavedWelcome) {
                     addMessageToUI(msg.text, msg.isUser, msg.timestamp, msg.sources);
                  } else if (!welcomeAdded) {
-                     // Se non avevamo aggiunto il benvenuto prima (perché il primo messaggio ERA l'utente),
-                     // ma il primo messaggio salvato È il benvenuto, lo aggiungiamo ora.
                       addWelcomeMessageToUI(msg.timestamp, msg.text);
                  }
             });
@@ -408,11 +399,9 @@
         scrollToBottom();
     }
     function addWelcomeMessageToUI(ts = null, customText = null) {
-        // Assicurati che non ci sia già un messaggio di benvenuto nel DOM
         if (chatMessages.querySelector('.fa-robot')) return;
-
         const d = document.createElement('div');
-        d.className = 'flex flex-col md:flex-row items-start gap-3 md:gap-4 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 animate-slide-in-left message-bubble'; // Added message-bubble
+        d.className = 'flex flex-col md:flex-row items-start gap-3 md:gap-4 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 animate-slide-in-left message-bubble';
         const welcomeText = customText || "Benvenuto all'Assistente CRI\nSono qui per rispondere alle tue domande sulla Croce Rossa Italiana. Come posso aiutarti oggi?";
         const timeString = ts ? new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         d.innerHTML = `
@@ -422,7 +411,6 @@
                 <p class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">${welcomeText}</p>
                 <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-2 text-left">${timeString}</div>
             </div>`;
-        // Inserisci il messaggio di benvenuto all'inizio del contenitore
         if (chatMessages.firstChild) {
             chatMessages.insertBefore(d, chatMessages.firstChild);
         } else {
@@ -430,11 +418,59 @@
         }
     }
     function adjustTextareaHeight() { const maxH=120;messageInput.style.height='auto';const sH=messageInput.scrollHeight;messageInput.style.height=Math.min(sH,maxH)+'px';messageInput.style.overflowY=sH>maxH?'auto':'hidden';}
-    function addMessage(txt,isU,src=null){const ts=new Date().toISOString();addMessageToUI(txt,isU,ts,src);saveMessageToChat(txt,isU,src,ts)} // Pass timestamp to save
+    function addMessage(txt,isU,src=null){const ts=new Date().toISOString();addMessageToUI(txt,isU,ts,src);saveMessageToChat(txt,isU,src,ts)}
     function addMessageToUI(txt,isU,ts=null,src=null){const d=document.createElement('div');d.className=`message-bubble animate-${isU?'slide-in-right':'slide-in-left'} clear-both flex ${isU?'justify-end':'justify-start'} mb-3`;const tS=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let mC='';if(isU){mC=`<div class="bg-cri-red text-white rounded-xl rounded-tr-none py-2 px-3 max-w-[85%] shadow-md"><div class="whitespace-pre-wrap text-sm">${txt}</div><div class="text-[10px] text-white text-opacity-70 text-right mt-1">${tS}</div></div>`}else{const hC=marked.parse(txt);let sH='';if(src&&src.length>0){const uS=new Set(src.map(s=>s?.metadata?.filename).filter(Boolean));if(uS.size>0){sH=`<div class="mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600/50"><div class="flex items-center justify-between cursor-pointer sources-toggle group"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-cri-red">Fonti (${uS.size})</span><button aria-label="Mostra fonti" class="text-xs text-gray-400 group-hover:text-cri-red p-0.5"><i class="fas fa-chevron-down toggle-icon transition-transform duration-200 text-[10px]"></i></button></div><div class="sources-content hidden mt-1 text-xs text-gray-500 dark:text-gray-400"><ul class="space-y-0.5 pl-1">${Array.from(uS).map(s=>`<li class="flex items-start gap-1.5"><i class="fas fa-file-alt text-cri-red/60 flex-shrink-0 mt-0.5"></i><span class="break-all text-[11px]">${s.replace('.md','').replace(/_/g,' ')}</span></li>`).join('')}</ul></div></div>`}}mC=`<div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-2 px-3 max-w-[85%] shadow-md border border-gray-100 dark:border-gray-700"><div class="prose prose-sm prose-chat dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">${hC}</div>${sH}<div class="text-[10px] text-gray-400 dark:text-gray-500 text-left mt-1">${tS}</div></div>`}d.innerHTML=mC;chatMessages.appendChild(d);const sT=d.querySelector('.sources-toggle');if(sT){sT.addEventListener('click',function(){const c=this.nextElementSibling,i=this.querySelector('.toggle-icon'),h=c.classList.toggle('hidden');i.classList.toggle('rotate-180',!h);setTimeout(()=>{const mB=d.offsetTop+d.offsetHeight;if(mB>chatMessages.scrollTop+chatMessages.clientHeight)chatMessages.scrollTo({top:chatMessages.scrollTop+50,behavior:'smooth'})},150)})}if(chatMessages.scrollHeight>chatMessages.clientHeight)scrollToBottom()}
     function saveMessageToChat(txt,isU,src=null,ts=null){if(!currentChatId)return;const i=chats.findIndex(c=>c.id===currentChatId);if(i===-1)return;if(!chats[i].messages)chats[i].messages=[];const timestampToSave=ts||new Date().toISOString();chats[i].messages.push({text:txt,isUser:isU,sources:src,timestamp:timestampToSave});if(isU&&chats[i].title==='Nuova conversazione'&&chats[i].messages.filter(m=>m.isUser).length===1){const w=txt.split(' ');chats[i].title=w.slice(0,4).join(' ')+(w.length>4?'...':'');renderChatsList()}chats[i].lastUpdated=timestampToSave;saveChats()}
-    function showTypingIndicator(){if(document.getElementById('typing-indicator'))return;const d=document.createElement('div');d.id='typing-indicator';d.className='message-bubble animate-fade-in flex justify-start mb-3 clear-both';d.innerHTML='<div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-3 px-4 shadow-md border border-gray-100 dark:border-gray-700 flex items-center"><div class="flex space-x-1.5"><div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div> <div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div> <div class="w-1.5 h-1.5 bg-cri-red rounded-full typing-dot"></div></div></div>';chatMessages.appendChild(d);scrollToBottom()}
-    function removeTypingIndicator(){const i=document.getElementById('typing-indicator');if(i)i.remove()}
+    
+    // --- MODIFICA: Funzione per mostrare l'indicatore di attesa animato ---
+    function showTypingIndicator() {
+        if (document.getElementById('typing-indicator')) return;
+
+        const d = document.createElement('div');
+        d.id = 'typing-indicator';
+        d.className = 'message-bubble animate-fade-in flex justify-start mb-3 clear-both';
+        d.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-3 px-4 shadow-md border border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                <div class="spinner !w-5 !h-5 !border-2"></div>
+                <span id="waiting-text" class="text-sm text-gray-600 dark:text-gray-300 italic transition-opacity duration-200"></span>
+            </div>`;
+        chatMessages.appendChild(d);
+
+        const waitingTextElement = document.getElementById('waiting-text');
+        if (waitingTextElement) {
+            let phraseIndex = 0;
+            // Mostra la prima frase immediatamente
+            waitingTextElement.textContent = waitingPhrases[phraseIndex];
+
+            // Avvia l'intervallo per ruotare le frasi ogni 4 secondi
+            waitingTextInterval = setInterval(() => {
+                phraseIndex = (phraseIndex + 1) % waitingPhrases.length;
+                
+                // Dissolvenza per un cambio più morbido
+                waitingTextElement.style.opacity = '0';
+                setTimeout(() => {
+                    waitingTextElement.textContent = waitingPhrases[phraseIndex];
+                    waitingTextElement.style.opacity = '1';
+                }, 250); // Deve corrispondere alla durata della transizione
+
+            }, 8000);
+        }
+        scrollToBottom();
+    }
+
+    // --- MODIFICA: Funzione per rimuovere l'indicatore e fermare la rotazione ---
+    function removeTypingIndicator() {
+        // Interrompi l'intervallo per la rotazione del testo
+        if (waitingTextInterval) {
+            clearInterval(waitingTextInterval);
+            waitingTextInterval = null;
+        }
+        // Rimuovi l'elemento dalla UI
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
 
     // --- SEND QUESTION - Updated Version v2 ---
     async function sendQuestion(question) {
@@ -445,48 +481,38 @@
                 isLoading = false; removeTypingIndicator(); return;
             }
 
-            // 1. Estrai la cronologia REALE dallo stato 'chats' (messaggi precedenti)
             const currentChatObject = chats.find(c => c.id === currentChatId);
             const baseConversationHistory = currentChatObject?.messages
-                ?.filter(msg => !(msg.isUser && msg.text === question)) // Evita duplicati della domanda corrente
+                ?.filter(msg => !(msg.isUser && msg.text === question))
                 .map(msg => ({
                     type: msg.isUser ? "user" : "assistant",
                     content: msg.text
                 })) || [];
 
-            // 2. *** MODIFICA CHIAVE v2 ***
-            //    Determina la storia da inviare all'API
             let historyToSendToAPI = [];
 
             if (baseConversationHistory.length === 0) {
-                // È LA PRIMA DOMANDA DELL'UTENTE IN QUESTA CHAT!
-                // Costruiamo l'array artificiale per MIMARE il vecchio frontend.
                 console.log(">>> PRIMA DOMANDA: Costruendo storia API artificiale <<<");
                 historyToSendToAPI = [
                     { type: "assistant", content: INITIAL_ASSISTANT_WELCOME },
                     { type: "user", content: question },
-                    { type: "assistant", content: ASSISTANT_TYPING_PLACEHOLDER } // Aggiungi il placeholder
+                    { type: "assistant", content: ASSISTANT_TYPING_PLACEHOLDER }
                 ];
             } else {
-                // È una domanda successiva. Usa la storia reale e aggiungi la domanda corrente.
                 console.log(">>> DOMANDA SUCCESSIVA: Usando storia reale + domanda corrente <<<");
                 historyToSendToAPI = [...baseConversationHistory];
                 historyToSendToAPI.push({ type: "user", content: question });
-                // Non aggiungiamo il placeholder per le domande successive,
-                // a meno che non sia strettamente necessario per replicare il vecchio comportamento.
             }
 
-            // 3. Prepara i dati della richiesta
             const requestData = {
                 query: question,
                 session_id: activeSessionId,
-                conversation_history: historyToSendToAPI, // <-- USA QUESTA!
+                conversation_history: historyToSendToAPI,
                 include_prompt: true
             };
 
-            console.log("Contesto INVIATO AL BACKEND:", JSON.stringify(requestData)); // Controlla questo log ORA!
+            console.log("Contesto INVIATO AL BACKEND:", JSON.stringify(requestData));
 
-            // 4. Chiama l'API e gestisci la risposta
             const response = await fetch(`${API_BASE_URL}/query`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -496,7 +522,6 @@
             const data = await response.json();
             console.log("Risposta DAL BACKEND:", data);
 
-            // ... log dettagliati RAG ...
             if (data.source_documents && data.source_documents.length > 0) {
                 console.log(`%c📚 ${data.source_documents.length} chunks RAG:`, 'color: #e3000f; font-weight: bold;', data.source_documents.map(d => d?.metadata?.filename || 'N/D'));
             }
@@ -506,7 +531,6 @@
             if (data.full_prompt) {
                 console.log('%c📝 Prompt LLM (Inizio):', 'color: purple; font-weight: bold;', data.full_prompt.substring(0, 500) + "...");
             }
-            // ... fine log RAG ...
 
             await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
             removeTypingIndicator();
@@ -525,26 +549,23 @@
         } finally {
             isLoading = false;
             sendMessageBtn.disabled = messageInput.value.trim() === '';
-            // Focus gestito da handleSubmit
         }
     }
     // --- END OF SEND QUESTION ---
 
 
     // --- UI Helpers ---
-    function scrollToBottom(smooth=false){const isScrolledUp=chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > 100; if(!isScrolledUp||smooth)chatMessages.scrollTo({top:chatMessages.scrollHeight,behavior:smooth?'smooth':'auto'}); toggleScrollButton();} // Changed instant to auto
+    function scrollToBottom(smooth=false){const isScrolledUp=chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > 100; if(!isScrolledUp||smooth)chatMessages.scrollTo({top:chatMessages.scrollHeight,behavior:smooth?'smooth':'auto'}); toggleScrollButton();}
     function toggleScrollButton(){const showThreshold=150,isScrolledUp=chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > showThreshold;scrollBottomBtn.classList.toggle('opacity-0',!isScrolledUp);scrollBottomBtn.classList.toggle('pointer-events-none',!isScrolledUp)}
-    function switchTab(tabName){tabSwitcherBtns.forEach(b=>{const btnTabName=b.id.split('-')[1];b.classList.toggle('bg-white',btnTabName===tabName);b.classList.toggle('bg-opacity-20',btnTabName===tabName);b.classList.toggle('hover:bg-white/20',btnTabName!==tabName)});mobileTabs.forEach(b=>{const isActive=b.dataset.tab===tabName;b.classList.toggle('bg-red-50',isActive);b.classList.toggle('dark:bg-red-900/30',isActive);b.classList.toggle('text-cri-red',isActive);b.classList.toggle('text-gray-600',!isActive);b.classList.toggle('dark:text-gray-400',!isActive);b.classList.toggle('hover:bg-gray-100',!isActive);b.classList.toggle('dark:hover:bg-gray-700/50',!isActive);});[tabChat,tabVoice].forEach(t=>t?.classList.add('hidden'));const activeTab=document.getElementById(`tab-${tabName}`);if(activeTab){activeTab.classList.remove('hidden');if(tabName==='voice')AOS.refreshHard();ensureWidgetPlacement()} } // Ensured voice widget check
+    function switchTab(tabName){tabSwitcherBtns.forEach(b=>{const btnTabName=b.id.split('-')[1];b.classList.toggle('bg-white',btnTabName===tabName);b.classList.toggle('bg-opacity-20',btnTabName===tabName);b.classList.toggle('hover:bg-white/20',btnTabName!==tabName)});mobileTabs.forEach(b=>{const isActive=b.dataset.tab===tabName;b.classList.toggle('bg-red-50',isActive);b.classList.toggle('dark:bg-red-900/30',isActive);b.classList.toggle('text-cri-red',isActive);b.classList.toggle('text-gray-600',!isActive);b.classList.toggle('dark:text-gray-400',!isActive);b.classList.toggle('hover:bg-gray-100',!isActive);b.classList.toggle('dark:hover:bg-gray-700/50',!isActive);});[tabChat,tabVoice].forEach(t=>t?.classList.add('hidden'));const activeTab=document.getElementById(`tab-${tabName}`);if(activeTab){activeTab.classList.remove('hidden');if(tabName==='voice')AOS.refreshHard();ensureWidgetPlacement()} }
     function openMobileSidebar(){if(!mobileSidebar||!mobileBackdrop||!mobileSidebarContent)return;mobileSidebar.classList.remove('hidden');document.body.style.overflow='hidden';requestAnimationFrame(()=>{mobileBackdrop.classList.remove('opacity-0');mobileSidebarContent.classList.remove('-translate-x-full')})}
     function closeMobileSidebar(){if(!mobileSidebar||!mobileBackdrop||!mobileSidebarContent)return;mobileBackdrop.classList.add('opacity-0');mobileSidebarContent.classList.add('-translate-x-full');setTimeout(()=>{mobileSidebar.classList.add('hidden');document.body.style.overflow=''},300)}
     function showModal(m){if(!m)return;m.classList.add('active');const f=m.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),c=m.querySelector('.close-modal-btn');if(f)f.focus();else if(c)c.focus()}
     function closeAllModals(){document.querySelectorAll('.modal-container.active').forEach(m=>m.classList.remove('active'));chatToDelete=null}
     function showNotification(txt,type='info'){notificationText.textContent=txt;notificationBanner.className=notificationBanner.className.replace(/bg-(cri-red|green-500|yellow-500)/g,'');let bgC='bg-cri-red';if(type==='success')bgC='bg-green-500';else if(type==='warning')bgC='bg-yellow-500';notificationBanner.classList.add(bgC);notificationBanner.classList.remove('-translate-y-full');setTimeout(hideNotification,4000)}
     function hideNotification(){notificationBanner.classList.add('-translate-y-full')}
-
     function ensureWidgetPlacement(){setTimeout(()=>{const w=document.querySelector('elevenlabs-convai'),c=document.querySelector('#tab-voice .widget-container'),p=document.getElementById('widget-placeholder');if(w&&c&&w.parentNode!==c){console.log("Moving ElevenLabs widget...");c.innerHTML='';c.appendChild(w);if(p)p.classList.add('hidden')}else if(!w&&c&&p)p.classList.remove('hidden')},300)}
     function observeElevenLabsWidget(){const o=new MutationObserver(m=>{for(const mut of m)if(mut.type==='childList')mut.addedNodes.forEach(n=>{if(n.tagName==='ELEVENLABS-CONVAI'){console.log("ElevenLabs widget added to DOM, ensuring placement.");ensureWidgetPlacement()}})});o.observe(document.body,{childList:!0,subtree:!0});ensureWidgetPlacement()}
-
   </script>
 </body>
 </html>
