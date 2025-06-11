@@ -115,6 +115,92 @@
     .message-bubble { clear: both; }
     .prose-chat p { margin-top: 0.5em; margin-bottom: 0.5em; } .prose-chat ul, .prose-chat ol { margin-top: 0.5em; margin-bottom: 0.5em; padding-left: 1.2em; } .prose-chat li { margin-top: 0.2em; margin-bottom: 0.2em; } .prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 { margin-bottom: 0.5em; margin-top: 1em; }
 
+    /* Copy button styles */
+    .copy-message-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #6b7280;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark .copy-message-btn {
+        background-color: rgba(55, 65, 81, 0.95);
+        color: #9ca3af;
+    }
+
+    .assistant-message:hover .copy-message-btn {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .copy-message-btn:hover {
+        background-color: #e3000f;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .copy-message-btn.copied {
+        background-color: #059669;
+        color: white;
+    }
+
+    .copy-message-btn.copied i:before {
+        content: "\f00c"; /* fa-check */
+    }
+
+    /* Show copy button always on mobile for better UX */
+    @media (max-width: 640px) {
+        .copy-message-btn {
+            opacity: 1;
+            visibility: visible;
+            width: 24px;
+            height: 24px;
+            font-size: 0.7rem;
+            top: 6px;
+            right: 6px;
+        }
+    }
+
+    /* Enhanced toast notification styles */
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: linear-gradient(135deg, #e3000f, #059669);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size: 0.9rem;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .toast-notification.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
     /* Responsive Fix: Ensure mobile menu button is always available when sidebar is hidden */
     #mobile-menu-btn { display: none; } /* Hide by default */
     @media (max-width: 767.98px) { /* Below md breakpoint */
@@ -126,7 +212,6 @@
         #sidebar { display: flex; } /* Show desktop sidebar */
     }
 
-
   </style>
 </head>
 <body class="cross-pattern-bg h-dvh flex flex-col dark:bg-gray-900 dark:text-gray-100 font-sans">
@@ -136,6 +221,12 @@
       <div class="flex items-center gap-2"><i class="fas fa-bell text-sm"></i><span id="notification-text" class="text-sm font-medium">Notifica!</span></div>
       <button id="close-notification" aria-label="Chiudi notifica" class="text-white opacity-70 hover:opacity-100 transition-opacity"><i class="fas fa-times"></i></button>
     </div>
+  </div>
+
+  <!-- Toast notification for copy feedback -->
+  <div id="toast-notification" class="toast-notification">
+    <i class="fas fa-check mr-2"></i>
+    <span id="toast-message">Messaggio copiato!</span>
   </div>
 
   <!-- App container -->
@@ -264,6 +355,8 @@
     const notificationText = document.getElementById('notification-text');
     const closeNotification = document.getElementById('close-notification');
     const suggestionChips = document.querySelectorAll('.suggestion-chip');
+    const toastNotification = document.getElementById('toast-notification');
+    const toastMessage = document.getElementById('toast-message');
 
     // --- State Variables ---
     let activeSessionId = null;
@@ -283,6 +376,78 @@
         "Elaboro la tua richiesta...",
         "Sto preparando le informazioni..."
     ];
+
+    // --- Copy to clipboard functionality ---
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+            }
+            
+            document.body.removeChild(textArea);
+            return successful;
+        }
+    }
+
+    // Get text content from message (excluding sources)
+    function getMessageTextContent(messageElement) {
+        if (!messageElement) return '';
+
+        // Clone the element to avoid modifying the original
+        const clonedElement = messageElement.cloneNode(true);
+        
+        // Remove sources section if present
+        const sourcesSection = clonedElement.querySelector('.sources-content');
+        if (sourcesSection) {
+            sourcesSection.remove();
+        }
+        
+        // Also remove the sources toggle if present
+        const sourcesToggle = clonedElement.querySelector('.sources-toggle');
+        if (sourcesToggle) {
+            sourcesToggle.remove();
+        }
+        
+        // Get the prose content area
+        const proseContent = clonedElement.querySelector('.prose-chat');
+        if (proseContent) {
+            return proseContent.textContent.trim();
+        }
+        
+        // Fallback to full text content
+        return clonedElement.textContent.trim();
+    }
+
+    // Show toast notification
+    function showToast(message, duration = 3000) {
+        if (toastMessage) {
+            toastMessage.textContent = message;
+        }
+        
+        if (toastNotification) {
+            toastNotification.classList.add('show');
+            
+            setTimeout(() => {
+                toastNotification.classList.remove('show');
+            }, duration);
+        }
+    }
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -419,7 +584,42 @@
     }
     function adjustTextareaHeight() { const maxH=120;messageInput.style.height='auto';const sH=messageInput.scrollHeight;messageInput.style.height=Math.min(sH,maxH)+'px';messageInput.style.overflowY=sH>maxH?'auto':'hidden';}
     function addMessage(txt,isU,src=null){const ts=new Date().toISOString();addMessageToUI(txt,isU,ts,src);saveMessageToChat(txt,isU,src,ts)}
-    function addMessageToUI(txt,isU,ts=null,src=null){const d=document.createElement('div');d.className=`message-bubble animate-${isU?'slide-in-right':'slide-in-left'} clear-both flex ${isU?'justify-end':'justify-start'} mb-3`;const tS=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let mC='';if(isU){mC=`<div class="bg-cri-red text-white rounded-xl rounded-tr-none py-2 px-3 max-w-[85%] shadow-md"><div class="whitespace-pre-wrap text-sm">${txt}</div><div class="text-[10px] text-white text-opacity-70 text-right mt-1">${tS}</div></div>`}else{const hC=marked.parse(txt);let sH='';if(src&&src.length>0){const uS=new Set(src.map(s=>s?.metadata?.filename).filter(Boolean));if(uS.size>0){sH=`<div class="mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600/50"><div class="flex items-center justify-between cursor-pointer sources-toggle group"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-cri-red">Fonti (${uS.size})</span><button aria-label="Mostra fonti" class="text-xs text-gray-400 group-hover:text-cri-red p-0.5"><i class="fas fa-chevron-down toggle-icon transition-transform duration-200 text-[10px]"></i></button></div><div class="sources-content hidden mt-1 text-xs text-gray-500 dark:text-gray-400"><ul class="space-y-0.5 pl-1">${Array.from(uS).map(s=>`<li class="flex items-start gap-1.5"><i class="fas fa-file-alt text-cri-red/60 flex-shrink-0 mt-0.5"></i><span class="break-all text-[11px]">${s.replace('.md','').replace(/_/g,' ')}</span></li>`).join('')}</ul></div></div>`}}mC=`<div class="bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-2 px-3 max-w-[85%] shadow-md border border-gray-100 dark:border-gray-700"><div class="prose prose-sm prose-chat dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">${hC}</div>${sH}<div class="text-[10px] text-gray-400 dark:text-gray-500 text-left mt-1">${tS}</div></div>`}d.innerHTML=mC;chatMessages.appendChild(d);const sT=d.querySelector('.sources-toggle');if(sT){sT.addEventListener('click',function(){const c=this.nextElementSibling,i=this.querySelector('.toggle-icon'),h=c.classList.toggle('hidden');i.classList.toggle('rotate-180',!h);setTimeout(()=>{const mB=d.offsetTop+d.offsetHeight;if(mB>chatMessages.scrollTop+chatMessages.clientHeight)chatMessages.scrollTo({top:chatMessages.scrollTop+50,behavior:'smooth'})},150)})}if(chatMessages.scrollHeight>chatMessages.clientHeight)scrollToBottom()}
+    function addMessageToUI(txt,isU,ts=null,src=null){const d=document.createElement('div');d.className=`message-bubble animate-${isU?'slide-in-right':'slide-in-left'} clear-both flex ${isU?'justify-end':'justify-start'} mb-3`;const tS=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});let mC='';if(isU){mC=`<div class="bg-cri-red text-white rounded-xl rounded-tr-none py-2 px-3 max-w-[85%] shadow-md"><div class="whitespace-pre-wrap text-sm">${txt}</div><div class="text-[10px] text-white text-opacity-70 text-right mt-1">${tS}</div></div>`}else{const hC=marked.parse(txt);let sH='';if(src&&src.length>0){const uS=new Set(src.map(s=>s?.metadata?.filename).filter(Boolean));if(uS.size>0){sH=`<div class="mt-2 pt-1.5 border-t border-gray-200 dark:border-gray-600/50"><div class="flex items-center justify-between cursor-pointer sources-toggle group"><span class="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-cri-red">Fonti (${uS.size})</span><button aria-label="Mostra fonti" class="text-xs text-gray-400 group-hover:text-cri-red p-0.5"><i class="fas fa-chevron-down toggle-icon transition-transform duration-200 text-[10px]"></i></button></div><div class="sources-content hidden mt-1 text-xs text-gray-500 dark:text-gray-400"><ul class="space-y-0.5 pl-1">${Array.from(uS).map(s=>`<li class="flex items-start gap-1.5"><i class="fas fa-file-alt text-cri-red/60 flex-shrink-0 mt-0.5"></i><span class="break-all text-[11px]">${s.replace('.md','').replace(/_/g,' ')}</span></li>`).join('')}</ul></div></div>`}}
+        
+        // Add copy button for assistant messages
+        const copyBtnHtml = `<button aria-label="Copia messaggio" class="copy-message-btn" title="Copia messaggio"><i class="fas fa-copy"></i></button>`;
+        
+        mC=`<div class="assistant-message bg-white dark:bg-gray-800 rounded-xl rounded-tl-none py-2 px-3 max-w-[85%] shadow-md border border-gray-100 dark:border-gray-700 relative">${copyBtnHtml}<div class="prose prose-sm prose-chat dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">${hC}</div>${sH}<div class="text-[10px] text-gray-400 dark:text-gray-500 text-left mt-1">${tS}</div></div>`}d.innerHTML=mC;chatMessages.appendChild(d);
+        
+        // Add copy button event listener for assistant messages
+        if (!isU) {
+            const copyBtn = d.querySelector('.copy-message-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const messageContent = getMessageTextContent(d.querySelector('.assistant-message'));
+                    if (messageContent) {
+                        const success = await copyToClipboard(messageContent);
+                        if (success) {
+                            // Visual feedback
+                            copyBtn.classList.add('copied');
+                            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                            showToast('Messaggio copiato!', 2000);
+                            
+                            // Reset button after 2 seconds
+                            setTimeout(() => {
+                                copyBtn.classList.remove('copied');
+                                copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                            }, 2000);
+                        } else {
+                            showToast('Errore durante la copia', 2000);
+                        }
+                    }
+                });
+            }
+        }
+
+        const sT=d.querySelector('.sources-toggle');if(sT){sT.addEventListener('click',function(){const c=this.nextElementSibling,i=this.querySelector('.toggle-icon'),h=c.classList.toggle('hidden');i.classList.toggle('rotate-180',!h);setTimeout(()=>{const mB=d.offsetTop+d.offsetHeight;if(mB>chatMessages.scrollTop+chatMessages.clientHeight)chatMessages.scrollTo({top:chatMessages.scrollTop+50,behavior:'smooth'})},150)})}if(chatMessages.scrollHeight>chatMessages.clientHeight)scrollToBottom()}
     function saveMessageToChat(txt,isU,src=null,ts=null){if(!currentChatId)return;const i=chats.findIndex(c=>c.id===currentChatId);if(i===-1)return;if(!chats[i].messages)chats[i].messages=[];const timestampToSave=ts||new Date().toISOString();chats[i].messages.push({text:txt,isUser:isU,sources:src,timestamp:timestampToSave});if(isU&&chats[i].title==='Nuova conversazione'&&chats[i].messages.filter(m=>m.isUser).length===1){const w=txt.split(' ');chats[i].title=w.slice(0,4).join(' ')+(w.length>4?'...':'');renderChatsList()}chats[i].lastUpdated=timestampToSave;saveChats()}
     
     // --- MODIFICA: Funzione per mostrare l'indicatore di attesa animato ---
